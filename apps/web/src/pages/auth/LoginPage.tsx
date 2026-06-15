@@ -1,41 +1,46 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { useAppConfig } from '@/contexts/AppConfigContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AuthCard } from '@/components/ui/auth-card'
-import { toast } from 'sonner'
-import { useTranslation } from '@/i18n'
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { AuthCard } from '@/components/ui/auth-card';
+import { Button } from '@/components/ui/button';
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAppConfig } from '@/contexts/AppConfigContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/i18n';
 
 export default function LoginPage() {
-  const { login, setPendingState } = useAuth()
-  const { registrationEnabled } = useAppConfig()
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
-  const [loading, setLoading] = useState(false)
+  const { login, setPendingState } = useAuth();
+  const { registrationEnabled } = useAppConfig();
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      const result = await login(email, password)
+      const result = await login(email, password);
       if (result.requiresTwoFactor && result.pendingToken && result.methods) {
-        setPendingState(result.pendingToken, result.methods)
-        navigate('/two-factor')
+        setPendingState(result.pendingToken, result.methods);
+        navigate('/two-factor');
       } else {
-        navigate('/dashboard')
+        navigate('/dashboard');
       }
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Login failed')
+      toast.error(err instanceof Error ? err.message : 'Login failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <AuthCard>
@@ -60,7 +65,10 @@ export default function LoginPage() {
           <div className="space-y-1">
             <div className="flex items-center justify-between">
               <Label htmlFor="password">{t('auth.password')}</Label>
-              <Link to="/forgot-password" className="text-xs text-primary hover:underline">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-primary hover:underline"
+              >
                 {t('auth.forgotPassword')}
               </Link>
             </div>
@@ -87,5 +95,5 @@ export default function LoginPage() {
         )}
       </CardContent>
     </AuthCard>
-  )
+  );
 }

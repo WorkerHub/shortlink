@@ -1,16 +1,21 @@
-import * as React from 'react'
-import { cn } from '@/lib/utils'
+import { cn } from '@/lib/utils';
 
 // Minimal Switch without Radix (to avoid extra dep)
 export interface SwitchProps {
-  checked: boolean
-  onCheckedChange: (checked: boolean) => void
-  disabled?: boolean
-  className?: string
-  id?: string
+  checked: boolean;
+  onCheckedChange: (checked: boolean) => void;
+  disabled?: boolean;
+  className?: string;
+  id?: string;
 }
 
-export function Switch({ checked, onCheckedChange, disabled, className, id }: SwitchProps) {
+export function Switch({
+  checked,
+  onCheckedChange,
+  disabled,
+  className,
+  id,
+}: SwitchProps) {
   return (
     <button
       type="button"
@@ -32,5 +37,5 @@ export function Switch({ checked, onCheckedChange, disabled, className, id }: Sw
         )}
       />
     </button>
-  )
+  );
 }

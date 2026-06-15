@@ -1,20 +1,20 @@
-import { useState } from 'react'
-import { Link, Outlet, useLocation } from 'react-router-dom'
-import { cn } from '@/lib/utils'
-import { Users, Link2, Settings, ArrowLeft, Menu } from 'lucide-react'
-import { useTranslation } from '@/i18n'
-import { Button } from '@/components/ui/button'
+import { ArrowLeft, Link2, Menu, Settings, Users } from 'lucide-react';
+import { useState } from 'react';
+import { Link, Outlet, useLocation } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
 
 export default function AdminLayout() {
-  const location = useLocation()
-  const { t } = useTranslation()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const location = useLocation();
+  const { t } = useTranslation();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
     { to: '/admin/users', label: t('admin.users'), icon: Users },
     { to: '/admin/links', label: t('admin.allLinks'), icon: Link2 },
     { to: '/admin/settings', label: t('nav.settings'), icon: Settings },
-  ]
+  ];
 
   const sidebarContent = (
     <>
@@ -51,14 +51,16 @@ export default function AdminLayout() {
         </Link>
       </div>
     </>
-  )
+  );
 
   return (
     <div className="flex h-screen bg-background">
       {mobileOpen && (
-        <div
+        <button
+          type="button"
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setMobileOpen(false)}
+          aria-label="Close menu"
         />
       )}
 
@@ -74,7 +76,11 @@ export default function AdminLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileOpen(true)}
+          >
             <Menu className="h-5 w-5" />
           </Button>
           <span className="font-bold text-lg">{t('admin.adminPanel')}</span>
@@ -85,5 +91,5 @@ export default function AdminLayout() {
         </main>
       </div>
     </div>
-  )
+  );
 }

@@ -52,13 +52,15 @@ export const en = {
     sendCode: 'Send verification code',
     sixDigitFromEmail: '6-digit code from email',
     resendCode: 'Resend code',
-    passkeyDesc: 'Use your registered passkey (fingerprint, face ID, or security key) to verify.',
+    passkeyDesc:
+      'Use your registered passkey (fingerprint, face ID, or security key) to verify.',
     verifyWithPasskey: 'Verify with Passkey',
     forgotPassword: 'Forgot password?',
     forgotPasswordTitle: 'Forgot Password',
     forgotPasswordDesc: 'Please enter your registered email.',
     sendResetCode: 'Send Reset Code',
-    resetCodeSentTo: 'If an account exists for {{email}}, a reset code will be sent to that email. Enter it below.',
+    resetCodeSentTo:
+      'If an account exists for {{email}}, a reset code will be sent to that email. Enter it below.',
     codeValidFor: 'The code is valid for 10 minutes.',
     resendCodeIn: 'Resend code in {{seconds}}s',
     verifyCode: 'Verify Code',
@@ -70,7 +72,8 @@ export const en = {
     resetSuccess: 'Password reset successfully. Please sign in.',
     backToLogin: 'Back to login',
     verifyEmailTitle: 'Verify your email',
-    verifyEmailDesc: 'A verification code has been sent to {{email}}. Enter it below to activate your account.',
+    verifyEmailDesc:
+      'A verification code has been sent to {{email}}. Enter it below to activate your account.',
     verificationCode: 'Verification Code',
     accountCreated: 'Account created! Please sign in.',
     verifyCodeResent: 'Verification code resent.',
@@ -85,7 +88,8 @@ export const en = {
     noLinks: 'No links yet. Create your first one!',
     totalLinks: '{{count}} total links',
     deleteTitle: 'Delete Link',
-    deleteDesc: 'This action cannot be undone. The short link will stop working immediately.',
+    deleteDesc:
+      'This action cannot be undone. The short link will stop working immediately.',
     createTitle: 'Create Short Link',
     destinationUrl: 'Destination URL *',
     customSlug: 'Custom slug (optional)',
@@ -141,7 +145,8 @@ export const en = {
     disableEmailOtp: 'Disable Email OTP',
     verifyEmailTitle: 'Verify Your Email',
     verifyEmailDesc: 'A verification code will be sent to your email address.',
-    emailOtpVerifyNote: 'Enter the code sent to your email to confirm it\'s valid.',
+    emailOtpVerifyNote:
+      "Enter the code sent to your email to confirm it's valid.",
     addPasskey: 'Add Passkey',
     removePasskey: 'Remove Passkey',
     removePasskeyDesc: 'Enter your current password to confirm removal.',
@@ -157,8 +162,10 @@ export const en = {
     enabled: 'Enabled',
     disabled: 'Disabled',
     confirmCurrentPassword: 'Enter your current password to confirm.',
-    totpEnabled: 'TOTP enabled! Save these backup codes — they will not be shown again.',
-    scanQrCode: 'Scan this QR code with your authenticator app, then enter the 6-digit code.',
+    totpEnabled:
+      'TOTP enabled! Save these backup codes — they will not be shown again.',
+    scanQrCode:
+      'Scan this QR code with your authenticator app, then enter the 6-digit code.',
     manualSecret: 'Or manually enter the secret:',
     setUpAuthApp: 'Set Up Authenticator App',
     done: 'Done',
@@ -179,35 +186,39 @@ export const en = {
     twoFA: '2FA',
     joined: 'Joined',
     deleteUser: 'Delete User',
-    deleteUserDesc: 'This will permanently delete the user and all their links.',
+    deleteUserDesc:
+      'This will permanently delete the user and all their links.',
     searchUsersPlaceholder: 'Search by email or username...',
     totalUsers: '{{count}} users',
     searchLinksPlaceholder: 'Search by slug or URL...',
     totalLinks: '{{count}} links',
     registrationToggle: 'User Registration',
-    registrationDesc: 'Allow new users to register. When disabled, only existing users can sign in.',
+    registrationDesc:
+      'Allow new users to register. When disabled, only existing users can sign in.',
     registrationCurrent: 'Registration is currently',
     open: 'open',
     closed: 'closed',
     appName: 'Application Name',
     appNameDesc: 'Shown in emails and the UI',
     emailProvider: 'Email Provider',
-    emailProviderDesc: 'Configure how the application sends email (used for OTP verification codes).',
+    emailProviderDesc:
+      'Configure how the application sends email (used for OTP verification codes).',
     provider: 'Provider',
     deleteLink: 'Delete Link',
     deleteLinkDesc: 'This will permanently delete the short link.',
     emailVerificationToggle: 'Email Verification on Registration',
-    emailVerificationDesc: 'Require new users to verify their email address before they can sign in.',
+    emailVerificationDesc:
+      'Require new users to verify their email address before they can sign in.',
     emailVerificationCurrent: 'Email verification is currently',
     emailVerificationEnabled: 'Email verification enabled',
     emailVerificationDisabled: 'Email verification disabled',
     emailVerificationRequired: 'required',
     emailVerificationNotRequired: 'not required',
   },
-} as const
+} as const;
 
 type DeepString<T> = {
-  [K in keyof T]: T[K] extends string ? string : DeepString<T[K]>
-}
+  [K in keyof T]: T[K] extends string ? string : DeepString<T[K]>;
+};
 
-export type Translations = DeepString<typeof en>
+export type Translations = DeepString<typeof en>;

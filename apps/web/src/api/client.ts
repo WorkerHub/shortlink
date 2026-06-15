@@ -1,19 +1,19 @@
 // Typed API client with automatic token refresh
 
-let accessToken: string | null = null
+let accessToken: string | null = null;
 
 export function setAccessToken(token: string | null) {
-  accessToken = token
+  accessToken = token;
 }
 
 export function getAccessToken() {
-  return accessToken
+  return accessToken;
 }
 
-const BASE = '/api'
+const BASE = '/api';
 
 interface ApiError {
-  error: string
+  error: string;
 }
 
 async function request<T>(
@@ -23,52 +23,66 @@ async function request<T>(
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...(options.headers as Record<string, string>),
-  }
+  };
 
   if (!options.skipAuth && accessToken) {
-    headers['Authorization'] = `Bearer ${accessToken}`
+    headers.Authorization = `Bearer ${accessToken}`;
   }
 
   // H4: credentials: 'include' sends the HttpOnly refresh cookie on every request
-  const res = await fetch(`${BASE}${path}`, { ...options, headers, credentials: 'include' })
+  const res = await fetch(`${BASE}${path}`, {
+    ...options,
+    headers,
+    credentials: 'include',
+  });
 
   if (res.status === 401 && !options.skipAuth) {
     // Attempt silent refresh via HttpOnly cookie
-    const refreshed = await tryRefresh()
+    const refreshed = await tryRefresh();
     if (refreshed) {
-      headers['Authorization'] = `Bearer ${accessToken}`
-      const retryRes = await fetch(`${BASE}${path}`, { ...options, headers, credentials: 'include' })
+      headers.Authorization = `Bearer ${accessToken}`;
+      const retryRes = await fetch(`${BASE}${path}`, {
+        ...options,
+        headers,
+        credentials: 'include',
+      });
       if (!retryRes.ok) {
-        const err = await retryRes.json().catch(() => ({ error: 'Request failed' })) as ApiError
-        throw new Error(err.error)
+        const err = (await retryRes
+          .json()
+          .catch(() => ({ error: 'Request failed' }))) as ApiError;
+        throw new Error(err.error);
       }
-      return retryRes.json() as Promise<T>
+      return retryRes.json() as Promise<T>;
     }
     // Refresh failed — clear access token and redirect
-    setAccessToken(null)
-    window.location.href = '/login'
-    throw new Error('Session expired')
+    setAccessToken(null);
+    window.location.href = '/login';
+    throw new Error('Session expired');
   }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: 'Request failed' })) as ApiError
-    throw new Error(err.error)
+    const err = (await res
+      .json()
+      .catch(() => ({ error: 'Request failed' }))) as ApiError;
+    throw new Error(err.error);
   }
 
-  if (res.status === 204) return undefined as T
-  return res.json() as Promise<T>
+  if (res.status === 204) return undefined as T;
+  return res.json() as Promise<T>;
 }
 
 // H4: Refresh uses the HttpOnly cookie — no token in body, no localStorage
 // S3: In-flight dedup prevents multiple concurrent 401s from each triggering a refresh call.
 //     With refresh token rotation, only the first call succeeds; others would see a revoked
 //     token and force the user back to login unexpectedly.
-let refreshPromise: Promise<boolean> | null = null
+let refreshPromise: Promise<boolean> | null = null;
 
 async function tryRefresh(): Promise<boolean> {
-  if (refreshPromise) return refreshPromise
-  refreshPromise = _doRefresh().finally(() => { refreshPromise = null })
-  return refreshPromise
+  if (refreshPromise) return refreshPromise;
+  refreshPromise = _doRefresh().finally(() => {
+    refreshPromise = null;
+  });
+  return refreshPromise;
 }
 
 async function _doRefresh(): Promise<boolean> {
@@ -77,42 +91,42 @@ async function _doRefresh(): Promise<boolean> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       credentials: 'include',
-    })
-    if (!res.ok) return false
-    const data = await res.json() as { accessToken: string }
-    setAccessToken(data.accessToken)
-    return true
+    });
+    if (!res.ok) return false;
+    const data = (await res.json()) as { accessToken: string };
+    setAccessToken(data.accessToken);
+    return true;
   } catch {
-    return false
+    return false;
   }
 }
 
 // ─── Auth API ─────────────────────────────────────────────────────────────────
 
 export interface User {
-  id: string
-  email: string
-  username: string
-  role: 'admin' | 'user'
-  is_active: number
-  totp_enabled: number
-  email_2fa_enabled: number
-  passkey_enabled: number
-  created_at: number
+  id: string;
+  email: string;
+  username: string;
+  role: 'admin' | 'user';
+  is_active: number;
+  totp_enabled: number;
+  email_2fa_enabled: number;
+  passkey_enabled: number;
+  created_at: number;
 }
 
 export interface LoginResult {
-  requiresTwoFactor?: boolean
-  pendingToken?: string
-  methods?: string[]
-  accessToken?: string
-  user?: User
+  requiresTwoFactor?: boolean;
+  pendingToken?: string;
+  methods?: string[];
+  accessToken?: string;
+  user?: User;
 }
 
 export interface RegisterResult {
-  user?: User
-  requiresEmailVerification?: boolean
-  userId?: string
+  user?: User;
+  requiresEmailVerification?: boolean;
+  userId?: string;
 }
 
 export const authApi = {
@@ -132,7 +146,8 @@ export const authApi = {
 
   me: () => request<{ user: User }>('/auth/me'),
 
-  logout: () => request<{ success: boolean }>('/auth/logout', { method: 'POST' }),
+  logout: () =>
+    request<{ success: boolean }>('/auth/logout', { method: 'POST' }),
 
   changePassword: (currentPassword: string, newPassword: string) =>
     request<{ success: boolean }>('/auth/change-password', {
@@ -182,12 +197,16 @@ export const authApi = {
     }),
 
   // TOTP
-  totpSetup: () => request<{ secret: string; uri: string }>('/auth/2fa/totp/setup'),
+  totpSetup: () =>
+    request<{ secret: string; uri: string }>('/auth/2fa/totp/setup'),
   totpConfirm: (code: string) =>
-    request<{ success: boolean; backupCodes: string[] }>('/auth/2fa/totp/confirm', {
-      method: 'POST',
-      body: JSON.stringify({ code }),
-    }),
+    request<{ success: boolean; backupCodes: string[] }>(
+      '/auth/2fa/totp/confirm',
+      {
+        method: 'POST',
+        body: JSON.stringify({ code }),
+      },
+    ),
   totpDisable: (currentPassword: string) =>
     request<{ success: boolean }>('/auth/2fa/totp', {
       method: 'DELETE',
@@ -202,7 +221,9 @@ export const authApi = {
 
   // Email OTP
   emailOtpSendVerify: () =>
-    request<{ success: boolean }>('/auth/2fa/email-otp/send-verify', { method: 'POST' }),
+    request<{ success: boolean }>('/auth/2fa/email-otp/send-verify', {
+      method: 'POST',
+    }),
   emailOtpEnable: (code: string) =>
     request<{ success: boolean }>('/auth/2fa/email-otp/enable', {
       method: 'POST',
@@ -228,21 +249,31 @@ export const authApi = {
 
   // Passkey
   passkeyList: () =>
-    request<{ passkeys: Array<{ id: string; name: string | null; created_at: number; last_used_at: number | null }> }>('/auth/2fa/passkey'),
+    request<{
+      passkeys: Array<{
+        id: string;
+        name: string | null;
+        created_at: number;
+        last_used_at: number | null;
+      }>;
+    }>('/auth/2fa/passkey'),
   passkeyRegisterOptions: () =>
-    request<{ options: PublicKeyCredentialCreationOptionsJSON; challengeId: string }>(
-      '/auth/2fa/passkey/register-options',
-      { method: 'POST' },
-    ),
+    request<{
+      options: PublicKeyCredentialCreationOptionsJSON;
+      challengeId: string;
+    }>('/auth/2fa/passkey/register-options', { method: 'POST' }),
   passkeyRegisterVerify: (
     response: RegistrationResponseJSON,
     challengeId: string,
     name?: string,
   ) =>
-    request<{ success: boolean; credentialId: string }>('/auth/2fa/passkey/register-verify', {
-      method: 'POST',
-      body: JSON.stringify({ response, challengeId, name }),
-    }),
+    request<{ success: boolean; credentialId: string }>(
+      '/auth/2fa/passkey/register-verify',
+      {
+        method: 'POST',
+        body: JSON.stringify({ response, challengeId, name }),
+      },
+    ),
   // H-3: Backend requires currentPassword to remove a passkey (M1 password confirmation)
   passkeyDelete: (id: string, currentPassword: string) =>
     request<{ success: boolean }>(`/auth/2fa/passkey/${id}`, {
@@ -250,10 +281,14 @@ export const authApi = {
       body: JSON.stringify({ currentPassword }),
     }),
   passkeyVerifyOptions: (pendingToken: string) =>
-    request<{ options: PublicKeyCredentialRequestOptionsJSON; challengeId: string }>(
-      '/auth/2fa/passkey/verify-options',
-      { method: 'POST', body: JSON.stringify({ pendingToken }), skipAuth: true },
-    ),
+    request<{
+      options: PublicKeyCredentialRequestOptionsJSON;
+      challengeId: string;
+    }>('/auth/2fa/passkey/verify-options', {
+      method: 'POST',
+      body: JSON.stringify({ pendingToken }),
+      skipAuth: true,
+    }),
   passkeyVerify: (
     pendingToken: string,
     response: AuthenticationResponseJSON,
@@ -264,61 +299,77 @@ export const authApi = {
       body: JSON.stringify({ pendingToken, response, challengeId }),
       skipAuth: true,
     }),
-}
+};
 
 // ─── Links API ────────────────────────────────────────────────────────────────
 
 export interface Link {
-  id: string
-  slug: string
-  destination_url: string
-  title: string | null
-  expires_at: number | null
-  is_active: number
-  user_seq: number
-  created_at: number
-  updated_at?: number
-  click_count?: number
+  id: string;
+  slug: string;
+  destination_url: string;
+  title: string | null;
+  expires_at: number | null;
+  is_active: number;
+  user_seq: number;
+  created_at: number;
+  updated_at?: number;
+  click_count?: number;
 }
 
 export interface CreateLinkPayload {
-  destinationUrl: string
-  customSlug?: string
-  title?: string
-  expiryDays?: number | null
-  expiresAt?: number | null
+  destinationUrl: string;
+  customSlug?: string;
+  title?: string;
+  expiryDays?: number | null;
+  expiresAt?: number | null;
 }
 
 export const linksApi = {
   list: (params?: { page?: number; limit?: number; search?: string }) => {
-    const qs = new URLSearchParams()
-    if (params?.page) qs.set('page', String(params.page))
-    if (params?.limit) qs.set('limit', String(params.limit))
-    if (params?.search) qs.set('search', params.search)
-    return request<{ links: Link[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
-      `/links?${qs}`,
-    )
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.limit) qs.set('limit', String(params.limit));
+    if (params?.search) qs.set('search', params.search);
+    return request<{
+      links: Link[];
+      pagination: { page: number; limit: number; total: number; pages: number };
+    }>(`/links?${qs}`);
   },
   get: (id: string) => request<{ link: Link }>(`/links/${id}`),
   create: (payload: CreateLinkPayload) =>
-    request<{ link: Link }>('/links', { method: 'POST', body: JSON.stringify(payload) }),
-  update: (id: string, payload: Partial<CreateLinkPayload & { isActive: boolean }>) =>
-    request<{ link: Link }>(`/links/${id}`, { method: 'PUT', body: JSON.stringify(payload) }),
-  delete: (id: string) => request<{ success: boolean }>(`/links/${id}`, { method: 'DELETE' }),
-}
+    request<{ link: Link }>('/links', {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }),
+  update: (
+    id: string,
+    payload: Partial<CreateLinkPayload & { isActive: boolean }>,
+  ) =>
+    request<{ link: Link }>(`/links/${id}`, {
+      method: 'PUT',
+      body: JSON.stringify(payload),
+    }),
+  delete: (id: string) =>
+    request<{ success: boolean }>(`/links/${id}`, { method: 'DELETE' }),
+};
 
 // ─── Analytics API ────────────────────────────────────────────────────────────
 
 export interface AnalyticsStats {
-  totalClicks: number
-  days: number
-  timeline: Array<{ day: string; clicks: number }>
-  countries: Array<{ country: string; clicks: number }>
-  devices: Array<{ device_type: string; clicks: number }>
-  browsers: Array<{ browser: string; clicks: number }>
-  os: Array<{ os: string; clicks: number }>
-  referrers: Array<{ referer: string; clicks: number }>
-  topLinks?: Array<{ id: string; slug: string; title: string | null; clicks: number }>
+  totalClicks: number;
+  days: number;
+  timeline: Array<{ day: string; clicks: number }>;
+  countries: Array<{ country: string; clicks: number }>;
+  devices: Array<{ device_type: string; clicks: number }>;
+  browsers: Array<{ browser: string; clicks: number }>;
+  os: Array<{ os: string; clicks: number }>;
+  referrers: Array<{ referer: string; clicks: number }>;
+  topLinks?: Array<{
+    id: string;
+    slug: string;
+    title: string | null;
+    clicks: number;
+  }>;
 }
 
 export const analyticsApi = {
@@ -327,27 +378,41 @@ export const analyticsApi = {
 
   get: (linkId: string, days = 30) =>
     request<{
-      link: { id: string; slug: string; destinationUrl: string; title: string | null; createdAt: number; expiresAt: number | null }
-      stats: AnalyticsStats
+      link: {
+        id: string;
+        slug: string;
+        destinationUrl: string;
+        title: string | null;
+        createdAt: number;
+        expiresAt: number | null;
+      };
+      stats: AnalyticsStats;
     }>(`/analytics/${linkId}?days=${days}`),
-}
+};
 
 // ─── Admin API ────────────────────────────────────────────────────────────────
 
 export const adminApi = {
   stats: () =>
-    request<{ users: number; links: number; clicksToday: number; clicksTotal: number }>(
-      '/admin/stats',
-    ),
+    request<{
+      users: number;
+      links: number;
+      clicksToday: number;
+      clicksTotal: number;
+    }>('/admin/stats'),
   users: (params?: { page?: number; search?: string }) => {
-    const qs = new URLSearchParams()
-    if (params?.page) qs.set('page', String(params.page))
-    if (params?.search) qs.set('search', params.search)
-    return request<{ users: User[]; pagination: { page: number; limit: number; total: number; pages: number } }>(
-      `/admin/users?${qs}`,
-    )
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.search) qs.set('search', params.search);
+    return request<{
+      users: User[];
+      pagination: { page: number; limit: number; total: number; pages: number };
+    }>(`/admin/users?${qs}`);
   },
-  updateUser: (id: string, payload: { isActive?: boolean; role?: 'admin' | 'user' }) =>
+  updateUser: (
+    id: string,
+    payload: { isActive?: boolean; role?: 'admin' | 'user' },
+  ) =>
     request<{ success: boolean }>(`/admin/users/${id}`, {
       method: 'PATCH',
       body: JSON.stringify(payload),
@@ -355,29 +420,42 @@ export const adminApi = {
   deleteUser: (id: string) =>
     request<{ success: boolean }>(`/admin/users/${id}`, { method: 'DELETE' }),
   links: (params?: { page?: number; search?: string; userId?: string }) => {
-    const qs = new URLSearchParams()
-    if (params?.page) qs.set('page', String(params.page))
-    if (params?.search) qs.set('search', params.search)
-    if (params?.userId) qs.set('userId', params.userId)
-    return request<{ links: Array<Link & { seq: number; user_email: string; user_username: string }>; pagination: { page: number; limit: number; total: number; pages: number } }>(
-      `/admin/links?${qs}`,
-    )
+    const qs = new URLSearchParams();
+    if (params?.page) qs.set('page', String(params.page));
+    if (params?.search) qs.set('search', params.search);
+    if (params?.userId) qs.set('userId', params.userId);
+    return request<{
+      links: Array<
+        Link & { seq: number; user_email: string; user_username: string }
+      >;
+      pagination: { page: number; limit: number; total: number; pages: number };
+    }>(`/admin/links?${qs}`);
   },
-  createUser: (payload: { email: string; username: string; password: string; role?: 'admin' | 'user' }) =>
+  createUser: (payload: {
+    email: string;
+    username: string;
+    password: string;
+    role?: 'admin' | 'user';
+  }) =>
     request<{ user: User }>('/admin/users', {
       method: 'POST',
       body: JSON.stringify(payload),
     }),
-  getSettings: () => request<{ settings: Record<string, string> }>('/admin/settings'),
+  getSettings: () =>
+    request<{ settings: Record<string, string> }>('/admin/settings'),
   updateSettings: (settings: Record<string, string>) =>
     request<{ success: boolean }>('/admin/settings', {
       method: 'PUT',
       body: JSON.stringify(settings),
     }),
-}
+};
 
 // Re-export WebAuthn types used by auth API
-type PublicKeyCredentialCreationOptionsJSON = import('@simplewebauthn/browser').PublicKeyCredentialCreationOptionsJSON
-type PublicKeyCredentialRequestOptionsJSON = import('@simplewebauthn/browser').PublicKeyCredentialRequestOptionsJSON
-type RegistrationResponseJSON = import('@simplewebauthn/browser').RegistrationResponseJSON
-type AuthenticationResponseJSON = import('@simplewebauthn/browser').AuthenticationResponseJSON
+type PublicKeyCredentialCreationOptionsJSON =
+  import('@simplewebauthn/browser').PublicKeyCredentialCreationOptionsJSON;
+type PublicKeyCredentialRequestOptionsJSON =
+  import('@simplewebauthn/browser').PublicKeyCredentialRequestOptionsJSON;
+type RegistrationResponseJSON =
+  import('@simplewebauthn/browser').RegistrationResponseJSON;
+type AuthenticationResponseJSON =
+  import('@simplewebauthn/browser').AuthenticationResponseJSON;

@@ -1,84 +1,93 @@
-import { useState } from 'react'
-import { Link, useNavigate } from 'react-router-dom'
-import { authApi } from '@/api/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { AuthCard } from '@/components/ui/auth-card'
-import { OtpInput } from '@/components/ui/otp-input'
-import { ResendCodeButton } from '@/components/resend-code-button'
-import { useCountdown } from '@/hooks/use-countdown'
-import { toast } from 'sonner'
-import { useTranslation } from '@/i18n'
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import { authApi } from '@/api/client';
+import { ResendCodeButton } from '@/components/resend-code-button';
+import { AuthCard } from '@/components/ui/auth-card';
+import { Button } from '@/components/ui/button';
+import {
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { OtpInput } from '@/components/ui/otp-input';
+import { useCountdown } from '@/hooks/use-countdown';
+import { useTranslation } from '@/i18n';
 
-type Step = 'email' | 'code' | 'password'
+type Step = 'email' | 'code' | 'password';
 
 export default function ForgotPasswordPage() {
-  const { t } = useTranslation()
-  const navigate = useNavigate()
-  const [step, setStep] = useState<Step>('email')
-  const [email, setEmail] = useState('')
-  const [code, setCode] = useState('')
-  const [newPassword, setNewPassword] = useState('')
-  const [confirmPassword, setConfirmPassword] = useState('')
-  const [loading, setLoading] = useState(false)
-  const { countdown, start: startCountdown } = useCountdown()
+  const { t } = useTranslation();
+  const navigate = useNavigate();
+  const [step, setStep] = useState<Step>('email');
+  const [email, setEmail] = useState('');
+  const [code, setCode] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const { countdown, start: startCountdown } = useCountdown();
 
   // Shared: send/resend reset code — always silent, never surfaces errors (no user enumeration)
   const sendCode = async (e?: React.FormEvent) => {
-    e?.preventDefault()
-    setLoading(true)
+    e?.preventDefault();
+    setLoading(true);
     try {
-      await authApi.forgotPassword(email)
+      await authApi.forgotPassword(email);
     } catch {
       // Silently ignore — the user should never know whether the email exists
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-    setCode('')
-    startCountdown(600)
-    setStep('code')
-  }
+    setCode('');
+    startCountdown(600);
+    setStep('code');
+  };
 
   // Step 2: verify code — if correct, advance to password step
   const handleCodeSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      await authApi.verifyResetCode(email, code)
-      setStep('password')
+      await authApi.verifyResetCode(email, code);
+      setStep('password');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Invalid code')
+      toast.error(err instanceof Error ? err.message : 'Invalid code');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   // Step 3: set new password
   const handlePasswordSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (newPassword !== confirmPassword) {
-      toast.error(t('settings.passwordsDoNotMatch'))
-      return
+      toast.error(t('settings.passwordsDoNotMatch'));
+      return;
     }
-    setLoading(true)
+    setLoading(true);
     try {
-      await authApi.resetPassword(email, code, newPassword)
-      toast.success(t('auth.resetSuccess'))
-      navigate('/login')
+      await authApi.resetPassword(email, code, newPassword);
+      toast.success(t('auth.resetSuccess'));
+      navigate('/login');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to reset password')
+      toast.error(
+        err instanceof Error ? err.message : 'Failed to reset password',
+      );
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   if (step === 'password') {
     return (
       <AuthCard>
         <CardHeader>
-          <CardTitle className="text-2xl">{t('auth.newPasswordTitle')}</CardTitle>
+          <CardTitle className="text-2xl">
+            {t('auth.newPasswordTitle')}
+          </CardTitle>
           <CardDescription>{t('auth.newPasswordDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -93,7 +102,9 @@ export default function ForgotPasswordPage() {
                 minLength={8}
                 autoComplete="new-password"
               />
-              <p className="text-xs text-muted-foreground">{t('auth.passwordHint')}</p>
+              <p className="text-xs text-muted-foreground">
+                {t('auth.passwordHint')}
+              </p>
             </div>
             <div className="space-y-1">
               <Label>{t('settings.confirmPassword')}</Label>
@@ -112,18 +123,24 @@ export default function ForgotPasswordPage() {
           </form>
         </CardContent>
       </AuthCard>
-    )
+    );
   }
 
   if (step === 'code') {
     return (
       <AuthCard>
         <CardHeader>
-          <CardTitle className="text-2xl">{t('auth.forgotPasswordTitle')}</CardTitle>
-          <CardDescription>{t('auth.resetCodeSentTo', { email })}</CardDescription>
+          <CardTitle className="text-2xl">
+            {t('auth.forgotPasswordTitle')}
+          </CardTitle>
+          <CardDescription>
+            {t('auth.resetCodeSentTo', { email })}
+          </CardDescription>
         </CardHeader>
         <CardContent>
-          <p className="text-xs text-muted-foreground mb-4">{t('auth.codeValidFor')}</p>
+          <p className="text-xs text-muted-foreground mb-4">
+            {t('auth.codeValidFor')}
+          </p>
           <form onSubmit={handleCodeSubmit} className="space-y-4">
             <div className="space-y-1">
               <Label>{t('auth.resetCode')}</Label>
@@ -139,7 +156,11 @@ export default function ForgotPasswordPage() {
             </Button>
           </form>
           <p className="mt-4 text-center text-sm text-muted-foreground">
-            <ResendCodeButton countdown={countdown} onResend={sendCode} loading={loading} />
+            <ResendCodeButton
+              countdown={countdown}
+              onResend={sendCode}
+              loading={loading}
+            />
           </p>
           <p className="mt-2 text-center text-sm text-muted-foreground">
             <Link to="/login" className="text-primary hover:underline">
@@ -148,13 +169,15 @@ export default function ForgotPasswordPage() {
           </p>
         </CardContent>
       </AuthCard>
-    )
+    );
   }
 
   return (
     <AuthCard>
       <CardHeader>
-        <CardTitle className="text-2xl">{t('auth.forgotPasswordTitle')}</CardTitle>
+        <CardTitle className="text-2xl">
+          {t('auth.forgotPasswordTitle')}
+        </CardTitle>
         <CardDescription>{t('auth.forgotPasswordDesc')}</CardDescription>
       </CardHeader>
       <CardContent>
@@ -181,5 +204,5 @@ export default function ForgotPasswordPage() {
         </p>
       </CardContent>
     </AuthCard>
-  )
+  );
 }

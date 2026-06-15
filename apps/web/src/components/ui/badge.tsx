@@ -1,8 +1,8 @@
-import * as React from 'react'
-import { cn } from '@/lib/utils'
+import type * as React from 'react';
+import { cn } from '@/lib/utils';
 
 export interface BadgeProps extends React.HTMLAttributes<HTMLDivElement> {
-  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success'
+  variant?: 'default' | 'secondary' | 'destructive' | 'outline' | 'success';
 }
 
 const variants = {
@@ -11,9 +11,13 @@ const variants = {
   destructive: 'bg-destructive text-destructive-foreground',
   outline: 'border border-input text-foreground',
   success: 'bg-green-100 text-green-800',
-}
+};
 
-export function Badge({ className, variant = 'default', ...props }: BadgeProps) {
+export function Badge({
+  className,
+  variant = 'default',
+  ...props
+}: BadgeProps) {
   return (
     <div
       className={cn(
@@ -23,5 +27,5 @@ export function Badge({ className, variant = 'default', ...props }: BadgeProps) 
       )}
       {...props}
     />
-  )
+  );
 }

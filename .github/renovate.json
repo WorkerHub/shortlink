@@ -12,21 +12,15 @@
     },
     {
       "groupName": "Cloudflare packages",
-      "matchPackageNames": [
-        "/^@cloudflare//"
-      ]
+      "matchPackageNames": ["/^@cloudflare//"]
     },
     {
       "groupName": "SimpleWebAuthn packages",
-      "matchPackageNames": [
-        "/^@simplewebauthn//"
-      ]
+      "matchPackageNames": ["/^@simplewebauthn//"]
     },
     {
       "groupName": "TanStack packages",
-      "matchPackageNames": [
-        "/^@tanstack//"
-      ]
+      "matchPackageNames": ["/^@tanstack//"]
     }
   ]
 }

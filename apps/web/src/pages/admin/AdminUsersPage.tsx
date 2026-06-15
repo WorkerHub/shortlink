@@ -1,50 +1,64 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { adminApi } from '@/api/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { toast } from 'sonner'
-import { Search, Trash2, UserPlus } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
-import { useAuth } from '@/contexts/AuthContext'
-import { useTranslation } from '@/i18n'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Search, Trash2, UserPlus } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { adminApi } from '@/api/client';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/i18n';
+import { formatDate } from '@/lib/utils';
 
 export default function AdminUsersPage() {
-  const { user: currentUser } = useAuth()
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [showCreate, setShowCreate] = useState(false)
+  const { user: currentUser } = useAuth();
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [showCreate, setShowCreate] = useState(false);
 
   const { data, isLoading } = useQuery({
     queryKey: ['admin-users', page, search],
     queryFn: () => adminApi.users({ page, search: search || undefined }),
-  })
+  });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, payload }: { id: string; payload: { isActive?: boolean; role?: 'admin' | 'user' } }) =>
-      adminApi.updateUser(id, payload),
+    mutationFn: ({
+      id,
+      payload,
+    }: {
+      id: string;
+      payload: { isActive?: boolean; role?: 'admin' | 'user' };
+    }) => adminApi.updateUser(id, payload),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-      toast.success('User updated')
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('User updated');
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed'),
-  })
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Failed'),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => adminApi.deleteUser(id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-      toast.success('User deleted')
-      setDeleteId(null)
+      queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+      toast.success('User deleted');
+      setDeleteId(null);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Failed'),
-  })
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Failed'),
+  });
 
   return (
     <div className="p-6">
@@ -60,39 +74,64 @@ export default function AdminUsersPage() {
         <Input
           placeholder={t('admin.searchUsersPlaceholder')}
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-9"
         />
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
+        <div className="text-center py-12 text-muted-foreground">
+          {t('common.loading')}
+        </div>
       ) : (
         <div className="rounded-md border">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
-                <th className="px-4 py-3 text-left font-medium">{t('common.user')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('admin.role')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('admin.twoFA')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('common.status')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('admin.joined')}</th>
-                <th className="px-4 py-3 text-right font-medium">{t('common.actions')}</th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('common.user')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('admin.role')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('admin.twoFA')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('common.status')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('admin.joined')}
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  {t('common.actions')}
+                </th>
               </tr>
             </thead>
             <tbody>
               {data?.users.map((u) => (
-                <tr key={u.id} className="border-b last:border-0 hover:bg-muted/20">
+                <tr
+                  key={u.id}
+                  className="border-b last:border-0 hover:bg-muted/20"
+                >
                   <td className="px-4 py-3">
                     <div className="font-medium">{u.username}</div>
-                    <div className="text-muted-foreground text-xs">{u.email}</div>
+                    <div className="text-muted-foreground text-xs">
+                      {u.email}
+                    </div>
                   </td>
                   <td className="px-4 py-3">
                     <select
                       value={u.role}
                       disabled={u.id === currentUser?.id}
                       onChange={(e) =>
-                        updateMutation.mutate({ id: u.id, payload: { role: e.target.value as 'admin' | 'user' } })
+                        updateMutation.mutate({
+                          id: u.id,
+                          payload: { role: e.target.value as 'admin' | 'user' },
+                        })
                       }
                       className="text-sm border rounded px-2 py-1 bg-background"
                     >
@@ -102,23 +141,45 @@ export default function AdminUsersPage() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1">
-                      {u.totp_enabled ? <Badge variant="secondary" className="text-xs">TOTP</Badge> : null}
-                      {u.passkey_enabled ? <Badge variant="secondary" className="text-xs">Passkey</Badge> : null}
-                      {u.email_2fa_enabled ? <Badge variant="secondary" className="text-xs">Email</Badge> : null}
+                      {u.totp_enabled ? (
+                        <Badge variant="secondary" className="text-xs">
+                          TOTP
+                        </Badge>
+                      ) : null}
+                      {u.passkey_enabled ? (
+                        <Badge variant="secondary" className="text-xs">
+                          Passkey
+                        </Badge>
+                      ) : null}
+                      {u.email_2fa_enabled ? (
+                        <Badge variant="secondary" className="text-xs">
+                          Email
+                        </Badge>
+                      ) : null}
                     </div>
                   </td>
                   <td className="px-4 py-3">
                     <button
+                      type="button"
                       disabled={u.id === currentUser?.id}
-                      onClick={() => updateMutation.mutate({ id: u.id, payload: { isActive: !u.is_active } })}
+                      onClick={() =>
+                        updateMutation.mutate({
+                          id: u.id,
+                          payload: { isActive: !u.is_active },
+                        })
+                      }
                       className="cursor-pointer"
                     >
                       <Badge variant={u.is_active ? 'success' : 'destructive'}>
-                        {u.is_active ? t('common.active') : t('common.inactive')}
+                        {u.is_active
+                          ? t('common.active')
+                          : t('common.inactive')}
                       </Badge>
                     </button>
                   </td>
-                  <td className="px-4 py-3 text-muted-foreground">{formatDate(u.created_at)}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(u.created_at)}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="flex justify-end">
                       <Button
@@ -145,10 +206,20 @@ export default function AdminUsersPage() {
             {t('admin.totalUsers', { count: data.pagination.total })}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
               {t('common.previous')}
             </Button>
-            <Button variant="outline" size="sm" disabled={page >= data.pagination.pages} onClick={() => setPage((p) => p + 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= data.pagination.pages}
+              onClick={() => setPage((p) => p + 1)}
+            >
               {t('common.next')}
             </Button>
           </div>
@@ -160,8 +231,8 @@ export default function AdminUsersPage() {
         open={showCreate}
         onOpenChange={setShowCreate}
         onCreated={() => {
-          queryClient.invalidateQueries({ queryKey: ['admin-users'] })
-          setShowCreate(false)
+          queryClient.invalidateQueries({ queryKey: ['admin-users'] });
+          setShowCreate(false);
         }}
       />
 
@@ -172,7 +243,9 @@ export default function AdminUsersPage() {
             <DialogDescription>{t('admin.deleteUserDesc')}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteId(null)}>{t('common.cancel')}</Button>
+            <Button variant="outline" onClick={() => setDeleteId(null)}>
+              {t('common.cancel')}
+            </Button>
             <Button
               variant="destructive"
               loading={deleteMutation.isPending}
@@ -184,7 +257,7 @@ export default function AdminUsersPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
 
 // ─── Create User Dialog ────────────────────────────────────────────────────────
@@ -194,28 +267,33 @@ function CreateUserDialog({
   onOpenChange,
   onCreated,
 }: {
-  open: boolean
-  onOpenChange: (o: boolean) => void
-  onCreated: () => void
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onCreated: () => void;
 }) {
-  const { t } = useTranslation()
-  const [form, setForm] = useState({ email: '', username: '', password: '', role: 'user' as 'admin' | 'user' })
-  const [loading, setLoading] = useState(false)
+  const { t } = useTranslation();
+  const [form, setForm] = useState({
+    email: '',
+    username: '',
+    password: '',
+    role: 'user' as 'admin' | 'user',
+  });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      await adminApi.createUser(form)
-      toast.success('User created')
-      setForm({ email: '', username: '', password: '', role: 'user' })
-      onCreated()
+      await adminApi.createUser(form);
+      toast.success('User created');
+      setForm({ email: '', username: '', password: '', role: 'user' });
+      onCreated();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create user')
+      toast.error(err instanceof Error ? err.message : 'Failed to create user');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -230,7 +308,9 @@ function CreateUserDialog({
             <Input
               type="email"
               value={form.email}
-              onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, email: e.target.value }))
+              }
               required
               autoComplete="off"
             />
@@ -240,7 +320,9 @@ function CreateUserDialog({
             <Input
               type="text"
               value={form.username}
-              onChange={(e) => setForm((f) => ({ ...f, username: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, username: e.target.value }))
+              }
               required
               autoComplete="off"
             />
@@ -250,7 +332,9 @@ function CreateUserDialog({
             <Input
               type="password"
               value={form.password}
-              onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, password: e.target.value }))
+              }
               required
               autoComplete="new-password"
               minLength={8}
@@ -260,7 +344,12 @@ function CreateUserDialog({
             <Label>{t('admin.role')}</Label>
             <select
               value={form.role}
-              onChange={(e) => setForm((f) => ({ ...f, role: e.target.value as 'admin' | 'user' }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  role: e.target.value as 'admin' | 'user',
+                }))
+              }
               className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm"
             >
               <option value="user">{t('common.user')}</option>
@@ -268,7 +357,11 @@ function CreateUserDialog({
             </select>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               {t('common.cancel')}
             </Button>
             <Button type="submit" loading={loading}>
@@ -278,5 +371,5 @@ function CreateUserDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,14 +1,14 @@
-import React from 'react'
-import ReactDOM from 'react-dom/client'
-import { BrowserRouter } from 'react-router-dom'
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
-import { Toaster } from 'sonner'
-import App from './App.tsx'
-import { AuthProvider } from './contexts/AuthContext.tsx'
-import { ThemeProvider } from './contexts/ThemeContext.tsx'
-import { AppConfigProvider } from './contexts/AppConfigContext.tsx'
-import { I18nProvider } from './i18n/index.tsx'
-import './styles/globals.css'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter } from 'react-router-dom';
+import { Toaster } from 'sonner';
+import App from './App.tsx';
+import { AppConfigProvider } from './contexts/AppConfigContext.tsx';
+import { AuthProvider } from './contexts/AuthContext.tsx';
+import { ThemeProvider } from './contexts/ThemeContext.tsx';
+import { I18nProvider } from './i18n/index.tsx';
+import './styles/globals.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -17,9 +17,11 @@ const queryClient = new QueryClient({
       staleTime: 30_000,
     },
   },
-})
+});
 
-ReactDOM.createRoot(document.getElementById('root')!).render(
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Failed to find the root element');
+ReactDOM.createRoot(rootElement).render(
   <React.StrictMode>
     <ThemeProvider>
       <I18nProvider>
@@ -36,4 +38,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       </I18nProvider>
     </ThemeProvider>
   </React.StrictMode>,
-)
+);

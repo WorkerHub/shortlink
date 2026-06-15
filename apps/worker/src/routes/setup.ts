@@ -1,13 +1,13 @@
-import { Hono } from 'hono'
-import type { Env, Variables } from '../types.js'
+import { Hono } from 'hono';
+import type { Env, Variables } from '../types.js';
 
-const app = new Hono<{ Bindings: Env; Variables: Variables }>()
+const app = new Hono<{ Bindings: Env; Variables: Variables }>();
 
 // ─── Table-prefix helper (mirrors src/lib/db.ts) ──────────────────────────────
 
 function tbl(prefix: string, name: string): string {
-  const p = prefix.replace(/[^a-zA-Z0-9_]/g, '')
-  return p ? `${p}_${name}` : name
+  const p = prefix.replace(/[^a-zA-Z0-9_]/g, '');
+  return p ? `${p}_${name}` : name;
 }
 
 // ─── Migration factory ────────────────────────────────────────────────────────
@@ -15,7 +15,7 @@ function tbl(prefix: string, name: string): string {
 // TABLE_PREFIX is empty or set to a custom value.
 
 function getMigrations(p: string): { name: string; sql: string }[] {
-  const t = (name: string) => tbl(p, name)
+  const t = (name: string) => tbl(p, name);
   return [
     {
       name: 'schema_v1',
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS ${t('totp_used')} (
 CREATE INDEX IF NOT EXISTS idx_totp_used_at ON ${t('totp_used')}(used_at);
 `,
     },
-  ]
+  ];
 }
 
 // D1's exec() only processes the first line of a multi-line string.
@@ -136,49 +136,57 @@ function toSingleLine(sql: string): string {
   return sql
     .split('\n')
     .map((line) => {
-      const idx = line.indexOf('--')
-      return idx >= 0 ? line.slice(0, idx) : line
+      const idx = line.indexOf('--');
+      return idx >= 0 ? line.slice(0, idx) : line;
     })
     .join(' ')
     .replace(/\s+/g, ' ')
-    .trim()
+    .trim();
 }
 
 app.get('/:secret', async (c) => {
-  const secret = c.req.param('secret')
+  const secret = c.req.param('secret');
   if (!c.env.SETUP_SECRET || secret !== c.env.SETUP_SECRET) {
-    return c.notFound()
+    return c.notFound();
   }
 
-  const prefix = c.env.TABLE_PREFIX ?? ''
-  const migrationsTable = '_' + tbl(prefix, 'schema_migrations')
+  const prefix = c.env.TABLE_PREFIX ?? '';
+  const migrationsTable = `_${tbl(prefix, 'schema_migrations')}`;
 
   // Use prepare().run() for single-statement DDL — avoids exec()'s newline limitation
   await c.env.DB.prepare(
     `CREATE TABLE IF NOT EXISTS ${migrationsTable} (name TEXT PRIMARY KEY, applied_at INTEGER NOT NULL DEFAULT (unixepoch()))`,
-  ).run()
+  ).run();
 
-  const { results } = await c.env.DB.prepare(`SELECT name FROM ${migrationsTable}`).all<{ name: string }>()
-  const applied = new Set(results.map((r) => r.name))
+  const { results } = await c.env.DB.prepare(
+    `SELECT name FROM ${migrationsTable}`,
+  ).all<{ name: string }>();
+  const applied = new Set(results.map((r) => r.name));
 
-  const log: { name: string; status: 'applied' | 'skipped' | 'error'; error?: string }[] = []
+  const log: {
+    name: string;
+    status: 'applied' | 'skipped' | 'error';
+    error?: string;
+  }[] = [];
 
   for (const migration of getMigrations(prefix)) {
     if (applied.has(migration.name)) {
-      log.push({ name: migration.name, status: 'skipped' })
-      continue
+      log.push({ name: migration.name, status: 'skipped' });
+      continue;
     }
     try {
-      await c.env.DB.exec(toSingleLine(migration.sql))
-      await c.env.DB.prepare(`INSERT INTO ${migrationsTable} (name) VALUES (?)`).bind(migration.name).run()
-      log.push({ name: migration.name, status: 'applied' })
+      await c.env.DB.exec(toSingleLine(migration.sql));
+      await c.env.DB.prepare(`INSERT INTO ${migrationsTable} (name) VALUES (?)`)
+        .bind(migration.name)
+        .run();
+      log.push({ name: migration.name, status: 'applied' });
     } catch (err) {
-      log.push({ name: migration.name, status: 'error', error: String(err) })
-      break
+      log.push({ name: migration.name, status: 'error', error: String(err) });
+      break;
     }
   }
 
-  return c.json({ migrations: log })
-})
+  return c.json({ migrations: log });
+});
 
-export default app
+export default app;

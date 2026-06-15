@@ -1,29 +1,34 @@
-import type { Env } from '../types.js'
-import { getCachedSetting, setCachedSetting } from './kv.js'
-import { sendViaSMTP } from './smtp.js'
-import { tbl } from './db.js'
+import type { Env } from '../types.js';
+import { tbl } from './db.js';
+import { getCachedSetting, setCachedSetting } from './kv.js';
+import { sendViaSMTP } from './smtp.js';
 
 interface EmailPayload {
-  to: string
-  subject: string
-  html: string
+  to: string;
+  subject: string;
+  html: string;
 }
 
 // Read a setting from KV cache → DB, then populate the cache on a miss.
 async function getSetting(env: Env, key: string): Promise<string> {
-  const cached = await getCachedSetting(env.LINKS_KV, key)
-  if (cached !== null) return cached
+  const cached = await getCachedSetting(env.LINKS_KV, key);
+  if (cached !== null) return cached;
 
-  const row = await env.DB.prepare(`SELECT value FROM ${tbl(env, 'settings')} WHERE key = ?1`)
+  const row = await env.DB.prepare(
+    `SELECT value FROM ${tbl(env, 'settings')} WHERE key = ?1`,
+  )
     .bind(key)
-    .first<{ value: string }>()
-  const value = row?.value ?? ''
-  await setCachedSetting(env.LINKS_KV, key, value)
-  return value
+    .first<{ value: string }>();
+  const value = row?.value ?? '';
+  await setCachedSetting(env.LINKS_KV, key, value);
+  return value;
 }
 
-export async function sendEmail(env: Env, payload: EmailPayload): Promise<void> {
-  const provider = await getSetting(env, 'email_provider')
+export async function sendEmail(
+  env: Env,
+  payload: EmailPayload,
+): Promise<void> {
+  const provider = await getSetting(env, 'email_provider');
 
   if (provider === 'smtp') {
     const [host, portStr, user, pass, from] = await Promise.all([
@@ -32,21 +37,23 @@ export async function sendEmail(env: Env, payload: EmailPayload): Promise<void> 
       getSetting(env, 'smtp_user'),
       getSetting(env, 'smtp_pass'),
       getSetting(env, 'smtp_from'),
-    ])
+    ]);
 
     if (!host || !from) {
-      throw new Error('SMTP is selected as email provider but smtp_host or smtp_from is not configured')
+      throw new Error(
+        'SMTP is selected as email provider but smtp_host or smtp_from is not configured',
+      );
     }
 
-    const port = parseInt(portStr, 10) || 587
+    const port = parseInt(portStr, 10) || 587;
 
     await sendViaSMTP(
       { host, port, user, pass, from },
       payload.to,
       payload.subject,
       payload.html,
-    )
-    return
+    );
+    return;
   }
 
   // Default: Resend — all config read from settings table
@@ -54,10 +61,12 @@ export async function sendEmail(env: Env, payload: EmailPayload): Promise<void> 
     getSetting(env, 'resend_api_key'),
     getSetting(env, 'email_from_domain'),
     getSetting(env, 'email_from_name'),
-  ])
+  ]);
 
   if (!apiKey || !fromDomain) {
-    throw new Error('Resend is selected as email provider but resend_api_key or email_from_domain is not configured in admin settings')
+    throw new Error(
+      'Resend is selected as email provider but resend_api_key or email_from_domain is not configured in admin settings',
+    );
   }
 
   const res = await fetch('https://api.resend.com/emails', {
@@ -72,21 +81,25 @@ export async function sendEmail(env: Env, payload: EmailPayload): Promise<void> 
       subject: payload.subject,
       html: payload.html,
     }),
-  })
+  });
 
   if (!res.ok) {
-    const text = await res.text()
-    throw new Error(`Resend error ${res.status}: ${text}`)
+    const text = await res.text();
+    throw new Error(`Resend error ${res.status}: ${text}`);
   }
 }
 
 // M-1: Escape HTML special characters so a malicious app_name cannot inject markup.
 function escHtml(s: string): string {
-  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;');
 }
 
 export function resetPasswordEmailHtml(appName: string, code: string): string {
-  const safeApp = escHtml(appName)
+  const safeApp = escHtml(appName);
   return `
 <!DOCTYPE html>
 <html>
@@ -100,11 +113,11 @@ export function resetPasswordEmailHtml(appName: string, code: string): string {
   <p style="color:#888;font-size:13px">This code expires in 10 minutes. If you did not request this, you can safely ignore this email.</p>
 </body>
 </html>
-  `.trim()
+  `.trim();
 }
 
 export function verifyEmailHtml(appName: string, code: string): string {
-  const safeApp = escHtml(appName)
+  const safeApp = escHtml(appName);
   return `
 <!DOCTYPE html>
 <html>
@@ -118,11 +131,11 @@ export function verifyEmailHtml(appName: string, code: string): string {
   <p style="color:#888;font-size:13px">This code expires in 10 minutes. If you did not create an account, you can safely ignore this email.</p>
 </body>
 </html>
-  `.trim()
+  `.trim();
 }
 
 export function otpEmailHtml(appName: string, code: string): string {
-  const safeApp = escHtml(appName)
+  const safeApp = escHtml(appName);
   return `
 <!DOCTYPE html>
 <html>
@@ -136,5 +149,5 @@ export function otpEmailHtml(appName: string, code: string): string {
   <p style="color:#888;font-size:13px">This code expires in 10 minutes. Do not share it with anyone.</p>
 </body>
 </html>
-  `.trim()
+  `.trim();
 }

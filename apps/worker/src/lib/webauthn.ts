@@ -1,12 +1,12 @@
 import {
-  generateRegistrationOptions,
-  verifyRegistrationResponse,
   generateAuthenticationOptions,
+  generateRegistrationOptions,
   verifyAuthenticationResponse,
-} from '@simplewebauthn/server'
-import type { PasskeyRow } from '../types.js'
+  verifyRegistrationResponse,
+} from '@simplewebauthn/server';
+import type { PasskeyRow } from '../types.js';
 
-export { generateRegistrationOptions, generateAuthenticationOptions }
+export { generateAuthenticationOptions, generateRegistrationOptions };
 
 export async function verifyPasskeyRegistration(
   response: unknown,
@@ -15,12 +15,14 @@ export async function verifyPasskeyRegistration(
   origin: string,
 ) {
   return verifyRegistrationResponse({
-    response: response as Parameters<typeof verifyRegistrationResponse>[0]['response'],
+    response: response as Parameters<
+      typeof verifyRegistrationResponse
+    >[0]['response'],
     expectedChallenge,
     expectedOrigin: origin,
     expectedRPID: rpID,
     requireUserVerification: true,
-  })
+  });
 }
 
 export async function verifyPasskeyAuthentication(
@@ -32,35 +34,38 @@ export async function verifyPasskeyAuthentication(
 ) {
   const transports = passkey.transports
     ? (JSON.parse(passkey.transports) as string[])
-    : undefined
+    : undefined;
 
   return verifyAuthenticationResponse({
-    response: response as Parameters<typeof verifyAuthenticationResponse>[0]['response'],
+    response: response as Parameters<
+      typeof verifyAuthenticationResponse
+    >[0]['response'],
     expectedChallenge,
     expectedOrigin: origin,
     expectedRPID: rpID,
     requireUserVerification: true,
     credential: {
       id: passkey.id,
-      publicKey: base64UrlToUint8Array(passkey.public_key) as Uint8Array<ArrayBuffer>,
+      publicKey: base64UrlToUint8Array(
+        passkey.public_key,
+      ) as Uint8Array<ArrayBuffer>,
       counter: passkey.counter,
-      transports: transports as Parameters<typeof verifyAuthenticationResponse>[0]['credential']['transports'],
+      transports: transports as Parameters<
+        typeof verifyAuthenticationResponse
+      >[0]['credential']['transports'],
     },
-  })
+  });
 }
 
 export function base64UrlToUint8Array(b64url: string): Uint8Array {
-  const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/')
-  const padded = b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '=')
-  return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0))
+  const b64 = b64url.replace(/-/g, '+').replace(/_/g, '/');
+  const padded = b64.padEnd(b64.length + ((4 - (b64.length % 4)) % 4), '=');
+  return Uint8Array.from(atob(padded), (c) => c.charCodeAt(0));
 }
 
 export function uint8ArrayToBase64Url(buf: Uint8Array): string {
   // LOW-5: Loop instead of spread to avoid RangeError on large keys (V8 limit ~65k args)
-  let s = ''
-  for (const b of buf) s += String.fromCharCode(b)
-  return btoa(s)
-    .replace(/\+/g, '-')
-    .replace(/\//g, '_')
-    .replace(/=/g, '')
+  let s = '';
+  for (const b of buf) s += String.fromCharCode(b);
+  return btoa(s).replace(/\+/g, '-').replace(/\//g, '_').replace(/=/g, '');
 }

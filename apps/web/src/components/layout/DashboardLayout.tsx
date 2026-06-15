@@ -1,30 +1,30 @@
-import { useState } from 'react'
-import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
-import { useAuth } from '@/contexts/AuthContext'
-import { useAppConfig } from '@/contexts/AppConfigContext'
-import { Button } from '@/components/ui/button'
-import { cn } from '@/lib/utils'
-import { Link2, BarChart2, Settings, LogOut, Shield, Menu } from 'lucide-react'
-import { useTranslation } from '@/i18n'
+import { BarChart2, Link2, LogOut, Menu, Settings, Shield } from 'lucide-react';
+import { useState } from 'react';
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { useAppConfig } from '@/contexts/AppConfigContext';
+import { useAuth } from '@/contexts/AuthContext';
+import { useTranslation } from '@/i18n';
+import { cn } from '@/lib/utils';
 
 export default function DashboardLayout() {
-  const { user, logout } = useAuth()
-  const { appName } = useAppConfig()
-  const { t } = useTranslation()
-  const location = useLocation()
-  const navigate = useNavigate()
-  const [mobileOpen, setMobileOpen] = useState(false)
+  const { user, logout } = useAuth();
+  const { appName } = useAppConfig();
+  const { t } = useTranslation();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems = [
     { to: '/dashboard/links', label: t('nav.links'), icon: Link2 },
     { to: '/dashboard/analytics', label: t('nav.analytics'), icon: BarChart2 },
     { to: '/dashboard/settings', label: t('nav.settings'), icon: Settings },
-  ]
+  ];
 
   const handleLogout = async () => {
-    await logout()
-    navigate('/login')
-  }
+    await logout();
+    navigate('/login');
+  };
 
   const navLinkClass = (to: string) =>
     cn(
@@ -32,7 +32,7 @@ export default function DashboardLayout() {
       location.pathname.startsWith(to)
         ? 'bg-primary text-primary-foreground'
         : 'text-muted-foreground hover:bg-accent hover:text-accent-foreground',
-    )
+    );
 
   const sidebarContent = (
     <>
@@ -70,21 +70,30 @@ export default function DashboardLayout() {
         )}
       </nav>
       <div className="p-3 border-t">
-        <div className="px-3 py-1 text-xs text-muted-foreground truncate mb-2">{user?.email}</div>
-        <Button variant="ghost" size="sm" className="w-full justify-start" onClick={handleLogout}>
+        <div className="px-3 py-1 text-xs text-muted-foreground truncate mb-2">
+          {user?.email}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="w-full justify-start"
+          onClick={handleLogout}
+        >
           <LogOut className="h-4 w-4" />
           {t('nav.logout')}
         </Button>
       </div>
     </>
-  )
+  );
 
   return (
     <div className="flex h-screen bg-background">
       {mobileOpen && (
-        <div
+        <button
+          type="button"
           className="fixed inset-0 z-40 bg-black/50 md:hidden"
           onClick={() => setMobileOpen(false)}
+          aria-label="Close menu"
         />
       )}
 
@@ -100,10 +109,17 @@ export default function DashboardLayout() {
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
         <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b shrink-0">
-          <Button variant="ghost" size="icon" onClick={() => setMobileOpen(true)}>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileOpen(true)}
+          >
             <Menu className="h-5 w-5" />
           </Button>
-          <Link to="/dashboard" className="flex items-center gap-2 font-bold text-lg">
+          <Link
+            to="/dashboard"
+            className="flex items-center gap-2 font-bold text-lg"
+          >
             <img src="/logo.svg" alt="" className="h-6 w-6 shrink-0" />
             {appName}
           </Link>
@@ -114,5 +130,5 @@ export default function DashboardLayout() {
         </main>
       </div>
     </div>
-  )
+  );
 }

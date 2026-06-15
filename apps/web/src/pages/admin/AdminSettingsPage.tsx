@@ -1,99 +1,116 @@
-import { useState, useEffect } from 'react'
-import { useQuery } from '@tanstack/react-query'
-import { adminApi } from '@/api/client'
-import { useAppConfig } from '@/contexts/AppConfigContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { Switch } from '@/components/ui/switch'
-import { toast } from 'sonner'
-import { useTranslation } from '@/i18n'
+import { useQuery } from '@tanstack/react-query';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { adminApi } from '@/api/client';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import { useAppConfig } from '@/contexts/AppConfigContext';
+import { useTranslation } from '@/i18n';
 
 export default function AdminSettingsPage() {
-  const { t } = useTranslation()
-  const { reload: reloadAppConfig } = useAppConfig()
+  const { t } = useTranslation();
+  const { reload: reloadAppConfig } = useAppConfig();
   const { data, isLoading } = useQuery({
     queryKey: ['admin-settings'],
     queryFn: adminApi.getSettings,
-  })
+  });
 
-  const [registrationEnabled, setRegistrationEnabled] = useState(false)
-  const [requireEmailVerification, setRequireEmailVerification] = useState(false)
-  const [appName, setAppName] = useState('')
-  const [savingAppName, setSavingAppName] = useState(false)
+  const [registrationEnabled, setRegistrationEnabled] = useState(false);
+  const [requireEmailVerification, setRequireEmailVerification] =
+    useState(false);
+  const [appName, setAppName] = useState('');
+  const [savingAppName, setSavingAppName] = useState(false);
 
   // Email settings
-  const [emailProvider, setEmailProvider] = useState<'resend' | 'smtp'>('resend')
+  const [emailProvider, setEmailProvider] = useState<'resend' | 'smtp'>(
+    'resend',
+  );
   // Resend
-  const [resendApiKey, setResendApiKey] = useState('')
-  const [emailFromDomain, setEmailFromDomain] = useState('')
-  const [emailFromName, setEmailFromName] = useState('')
+  const [resendApiKey, setResendApiKey] = useState('');
+  const [emailFromDomain, setEmailFromDomain] = useState('');
+  const [emailFromName, setEmailFromName] = useState('');
   // SMTP
-  const [smtpHost, setSmtpHost] = useState('')
-  const [smtpPort, setSmtpPort] = useState('587')
-  const [smtpUser, setSmtpUser] = useState('')
-  const [smtpPass, setSmtpPass] = useState('')
-  const [smtpFrom, setSmtpFrom] = useState('')
-  const [savingEmail, setSavingEmail] = useState(false)
+  const [smtpHost, setSmtpHost] = useState('');
+  const [smtpPort, setSmtpPort] = useState('587');
+  const [smtpUser, setSmtpUser] = useState('');
+  const [smtpPass, setSmtpPass] = useState('');
+  const [smtpFrom, setSmtpFrom] = useState('');
+  const [savingEmail, setSavingEmail] = useState(false);
 
   useEffect(() => {
     if (data?.settings) {
-      const s = data.settings
-      setRegistrationEnabled(s['registration_enabled'] === 'true')
-      setRequireEmailVerification(s['require_email_verification'] === 'true')
-      setAppName(s['app_name'] ?? 'ShortLink')
-      setEmailProvider((s['email_provider'] as 'resend' | 'smtp') ?? 'resend')
-      setResendApiKey(s['resend_api_key'] ?? '')
-      setEmailFromDomain(s['email_from_domain'] ?? '')
-      setEmailFromName(s['email_from_name'] ?? '')
-      setSmtpHost(s['smtp_host'] ?? '')
-      setSmtpPort(s['smtp_port'] ?? '587')
-      setSmtpUser(s['smtp_user'] ?? '')
-      setSmtpPass(s['smtp_pass'] ?? '')
-      setSmtpFrom(s['smtp_from'] ?? '')
+      const s = data.settings;
+      setRegistrationEnabled(s.registration_enabled === 'true');
+      setRequireEmailVerification(s.require_email_verification === 'true');
+      setAppName(s.app_name ?? 'ShortLink');
+      setEmailProvider((s.email_provider as 'resend' | 'smtp') ?? 'resend');
+      setResendApiKey(s.resend_api_key ?? '');
+      setEmailFromDomain(s.email_from_domain ?? '');
+      setEmailFromName(s.email_from_name ?? '');
+      setSmtpHost(s.smtp_host ?? '');
+      setSmtpPort(s.smtp_port ?? '587');
+      setSmtpUser(s.smtp_user ?? '');
+      setSmtpPass(s.smtp_pass ?? '');
+      setSmtpFrom(s.smtp_from ?? '');
     }
-  }, [data])
+  }, [data]);
 
   const handleRegistrationToggle = async (enabled: boolean) => {
-    setRegistrationEnabled(enabled)
+    setRegistrationEnabled(enabled);
     try {
-      await adminApi.updateSettings({ registration_enabled: enabled ? 'true' : 'false' })
-      toast.success(`Registration ${enabled ? 'enabled' : 'disabled'}`)
+      await adminApi.updateSettings({
+        registration_enabled: enabled ? 'true' : 'false',
+      });
+      toast.success(`Registration ${enabled ? 'enabled' : 'disabled'}`);
     } catch (err) {
-      setRegistrationEnabled(!enabled)
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      setRegistrationEnabled(!enabled);
+      toast.error(err instanceof Error ? err.message : 'Failed');
     }
-  }
+  };
 
   const handleRequireEmailVerificationToggle = async (enabled: boolean) => {
-    setRequireEmailVerification(enabled)
+    setRequireEmailVerification(enabled);
     try {
-      await adminApi.updateSettings({ require_email_verification: enabled ? 'true' : 'false' })
-      toast.success(enabled ? t('admin.emailVerificationEnabled') : t('admin.emailVerificationDisabled'))
+      await adminApi.updateSettings({
+        require_email_verification: enabled ? 'true' : 'false',
+      });
+      toast.success(
+        enabled
+          ? t('admin.emailVerificationEnabled')
+          : t('admin.emailVerificationDisabled'),
+      );
     } catch (err) {
-      setRequireEmailVerification(!enabled)
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      setRequireEmailVerification(!enabled);
+      toast.error(err instanceof Error ? err.message : 'Failed');
     }
-  }
+  };
 
   const handleSaveAppName = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSavingAppName(true)
+    e.preventDefault();
+    setSavingAppName(true);
     try {
-      await adminApi.updateSettings({ app_name: appName })
-      reloadAppConfig()
-      toast.success('App name updated')
+      await adminApi.updateSettings({ app_name: appName });
+      reloadAppConfig();
+      toast.success('App name updated');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
-      setSavingAppName(false)
+      setSavingAppName(false);
     }
-  }
+  };
 
   const handleSaveEmailSettings = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setSavingEmail(true)
+    e.preventDefault();
+    setSavingEmail(true);
     try {
       await adminApi.updateSettings({
         email_provider: emailProvider,
@@ -105,16 +122,19 @@ export default function AdminSettingsPage() {
         smtp_user: smtpUser,
         smtp_pass: smtpPass,
         smtp_from: smtpFrom,
-      })
-      toast.success('Email settings saved')
+      });
+      toast.success('Email settings saved');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
-      setSavingEmail(false)
+      setSavingEmail(false);
     }
-  }
+  };
 
-  if (isLoading) return <div className="p-6 text-muted-foreground">{t('common.loading')}</div>
+  if (isLoading)
+    return (
+      <div className="p-6 text-muted-foreground">{t('common.loading')}</div>
+    );
 
   return (
     <div className="p-6 max-w-2xl space-y-6">
@@ -123,7 +143,9 @@ export default function AdminSettingsPage() {
       {/* Registration toggle */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t('admin.registrationToggle')}</CardTitle>
+          <CardTitle className="text-base">
+            {t('admin.registrationToggle')}
+          </CardTitle>
           <CardDescription>{t('admin.registrationDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -135,7 +157,9 @@ export default function AdminSettingsPage() {
             />
             <Label htmlFor="reg-toggle">
               {t('admin.registrationCurrent')}{' '}
-              <strong>{registrationEnabled ? t('admin.open') : t('admin.closed')}</strong>
+              <strong>
+                {registrationEnabled ? t('admin.open') : t('admin.closed')}
+              </strong>
             </Label>
           </div>
         </CardContent>
@@ -144,7 +168,9 @@ export default function AdminSettingsPage() {
       {/* Email verification toggle */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t('admin.emailVerificationToggle')}</CardTitle>
+          <CardTitle className="text-base">
+            {t('admin.emailVerificationToggle')}
+          </CardTitle>
           <CardDescription>{t('admin.emailVerificationDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -156,7 +182,11 @@ export default function AdminSettingsPage() {
             />
             <Label htmlFor="email-verify-toggle">
               {t('admin.emailVerificationCurrent')}{' '}
-              <strong>{requireEmailVerification ? t('admin.emailVerificationRequired') : t('admin.emailVerificationNotRequired')}</strong>
+              <strong>
+                {requireEmailVerification
+                  ? t('admin.emailVerificationRequired')
+                  : t('admin.emailVerificationNotRequired')}
+              </strong>
             </Label>
           </div>
         </CardContent>
@@ -187,7 +217,9 @@ export default function AdminSettingsPage() {
       {/* Email provider */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">{t('admin.emailProvider')}</CardTitle>
+          <CardTitle className="text-base">
+            {t('admin.emailProvider')}
+          </CardTitle>
           <CardDescription>{t('admin.emailProviderDesc')}</CardDescription>
         </CardHeader>
         <CardContent>
@@ -197,7 +229,9 @@ export default function AdminSettingsPage() {
               <select
                 id="email-provider"
                 value={emailProvider}
-                onChange={(e) => setEmailProvider(e.target.value as 'resend' | 'smtp')}
+                onChange={(e) =>
+                  setEmailProvider(e.target.value as 'resend' | 'smtp')
+                }
                 className="flex h-9 w-full max-w-xs rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
               >
                 <option value="resend">Resend</option>
@@ -228,7 +262,8 @@ export default function AdminSettingsPage() {
                       resend.com
                     </a>
                     . Stored in the database; alternatively set the{' '}
-                    <code className="text-xs">RESEND_API_KEY</code> Worker secret.
+                    <code className="text-xs">RESEND_API_KEY</code> Worker
+                    secret.
                   </p>
                 </div>
 
@@ -251,8 +286,9 @@ export default function AdminSettingsPage() {
                     placeholder="example.com"
                   />
                   <p className="text-xs text-muted-foreground">
-                    Emails will be sent from <code className="text-xs">noreply@&lt;domain&gt;</code>.
-                    The domain must be verified in your Resend account.
+                    Emails will be sent from{' '}
+                    <code className="text-xs">noreply@&lt;domain&gt;</code>. The
+                    domain must be verified in your Resend account.
                   </p>
                 </div>
               </div>
@@ -330,5 +366,5 @@ export default function AdminSettingsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

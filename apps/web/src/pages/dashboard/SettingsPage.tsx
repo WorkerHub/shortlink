@@ -1,27 +1,40 @@
-import { useState, useEffect } from 'react'
-import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { authApi, setAccessToken } from '@/api/client'
-import { useAuth } from '@/contexts/AuthContext'
-import { useTheme, type Theme } from '@/contexts/ThemeContext'
-import { useTranslation, type Lang } from '@/i18n'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/components/ui/dialog'
-import { Badge } from '@/components/ui/badge'
-import { OtpInput } from '@/components/ui/otp-input'
-import { ResendCodeButton } from '@/components/resend-code-button'
-import { useCountdown } from '@/hooks/use-countdown'
-import { toast } from 'sonner'
-import { startRegistration } from '@simplewebauthn/browser'
-import { Trash2, Plus, Shield, Mail, Key } from 'lucide-react'
-import { formatDate } from '@/lib/utils'
-import QRCode from 'qrcode'
+import { startRegistration } from '@simplewebauthn/browser';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { Key, Mail, Plus, Shield, Trash2 } from 'lucide-react';
+import QRCode from 'qrcode';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
+import { authApi } from '@/api/client';
+import { ResendCodeButton } from '@/components/resend-code-button';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { OtpInput } from '@/components/ui/otp-input';
+import { useAuth } from '@/contexts/AuthContext';
+import { type Theme, useTheme } from '@/contexts/ThemeContext';
+import { useCountdown } from '@/hooks/use-countdown';
+import { type Lang, useTranslation } from '@/i18n';
+import { formatDate } from '@/lib/utils';
 
 export default function SettingsPage() {
-  const { user, refreshUser } = useAuth()
-  const { t } = useTranslation()
+  const { user, refreshUser } = useAuth();
+  const { t } = useTranslation();
 
   return (
     <div className="p-6 max-w-2xl space-y-6">
@@ -32,25 +45,25 @@ export default function SettingsPage() {
       <PasskeyCard onUpdate={refreshUser} />
       <EmailOtpCard user={user} onUpdate={refreshUser} />
     </div>
-  )
+  );
 }
 
 // ─── Preferences ──────────────────────────────────────────────────────────────
 
 function PreferencesCard() {
-  const { t, lang, setLang } = useTranslation()
-  const { theme, setTheme } = useTheme()
+  const { t, lang, setLang } = useTranslation();
+  const { theme, setTheme } = useTheme();
 
   const themes: { value: Theme; label: string }[] = [
     { value: 'light', label: t('settings.light') },
     { value: 'dark', label: t('settings.dark') },
     { value: 'system', label: t('settings.system') },
-  ]
+  ];
 
   const langs: { value: Lang; label: string }[] = [
     { value: 'en', label: 'English' },
     { value: 'zh-CN', label: '中文' },
-  ]
+  ];
 
   return (
     <Card>
@@ -98,38 +111,44 @@ function PreferencesCard() {
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // ─── Change Password ──────────────────────────────────────────────────────────
 
 function ChangePasswordCard() {
-  const { t } = useTranslation()
-  const [form, setForm] = useState({ currentPassword: '', newPassword: '', confirm: '' })
-  const [loading, setLoading] = useState(false)
+  const { t } = useTranslation();
+  const [form, setForm] = useState({
+    currentPassword: '',
+    newPassword: '',
+    confirm: '',
+  });
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
+    e.preventDefault();
     if (form.newPassword !== form.confirm) {
-      toast.error(t('settings.passwordsDoNotMatch'))
-      return
+      toast.error(t('settings.passwordsDoNotMatch'));
+      return;
     }
-    setLoading(true)
+    setLoading(true);
     try {
-      await authApi.changePassword(form.currentPassword, form.newPassword)
-      toast.success('Password updated')
-      setForm({ currentPassword: '', newPassword: '', confirm: '' })
+      await authApi.changePassword(form.currentPassword, form.newPassword);
+      toast.success('Password updated');
+      setForm({ currentPassword: '', newPassword: '', confirm: '' });
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-base">{t('settings.changePassword')}</CardTitle>
+        <CardTitle className="text-base">
+          {t('settings.changePassword')}
+        </CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-3">
@@ -138,7 +157,9 @@ function ChangePasswordCard() {
             <Input
               type="password"
               value={form.currentPassword}
-              onChange={(e) => setForm((f) => ({ ...f, currentPassword: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, currentPassword: e.target.value }))
+              }
               required
               autoComplete="current-password"
             />
@@ -148,7 +169,9 @@ function ChangePasswordCard() {
             <Input
               type="password"
               value={form.newPassword}
-              onChange={(e) => setForm((f) => ({ ...f, newPassword: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, newPassword: e.target.value }))
+              }
               required
               autoComplete="new-password"
               minLength={8}
@@ -159,7 +182,9 @@ function ChangePasswordCard() {
             <Input
               type="password"
               value={form.confirm}
-              onChange={(e) => setForm((f) => ({ ...f, confirm: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, confirm: e.target.value }))
+              }
               required
               autoComplete="new-password"
             />
@@ -170,76 +195,85 @@ function ChangePasswordCard() {
         </form>
       </CardContent>
     </Card>
-  )
+  );
 }
 
 // ─── TOTP ─────────────────────────────────────────────────────────────────────
 
-function TotpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['user']; onUpdate: () => Promise<void> }) {
-  const { t } = useTranslation()
-  const [showSetup, setShowSetup] = useState(false)
-  const [setupData, setSetupData] = useState<{ secret: string; uri: string } | null>(null)
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null)
+function TotpCard({
+  user,
+  onUpdate,
+}: {
+  user: ReturnType<typeof useAuth>['user'];
+  onUpdate: () => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const [showSetup, setShowSetup] = useState(false);
+  const [setupData, setSetupData] = useState<{
+    secret: string;
+    uri: string;
+  } | null>(null);
+  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
 
   useEffect(() => {
     if (setupData?.uri) {
       QRCode.toDataURL(setupData.uri, { width: 200, margin: 2 })
         .then(setQrDataUrl)
-        .catch(() => setQrDataUrl(null))
+        .catch(() => setQrDataUrl(null));
     } else {
-      setQrDataUrl(null)
+      setQrDataUrl(null);
     }
-  }, [setupData?.uri])
-  const [code, setCode] = useState('')
-  const [backupCodes, setBackupCodes] = useState<string[]>([])
-  const [loading, setLoading] = useState(false)
-  const [disablePassword, setDisablePassword] = useState('')
-  const [showDisableDialog, setShowDisableDialog] = useState(false)
+  }, [setupData?.uri]);
+  const [code, setCode] = useState('');
+  const [backupCodes, setBackupCodes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [disablePassword, setDisablePassword] = useState('');
+  const [showDisableDialog, setShowDisableDialog] = useState(false);
 
   const startSetup = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const data = await authApi.totpSetup()
-      setSetupData(data)
-      setShowSetup(true)
+      const data = await authApi.totpSetup();
+      setSetupData(data);
+      setShowSetup(true);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const confirmSetup = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      const result = await authApi.totpConfirm(code)
-      setBackupCodes(result.backupCodes)
-      toast.success('TOTP enabled!')
-      onUpdate()
+      const result = await authApi.totpConfirm(code);
+      setBackupCodes(result.backupCodes);
+      toast.success('TOTP enabled!');
+      onUpdate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Invalid code')
+      toast.error(err instanceof Error ? err.message : 'Invalid code');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const disable = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      await authApi.totpDisable(disablePassword)
-      toast.success('TOTP disabled')
-      setShowDisableDialog(false)
-      setDisablePassword('')
-      onUpdate()
+      await authApi.totpDisable(disablePassword);
+      toast.success('TOTP disabled');
+      setShowDisableDialog(false);
+      setDisablePassword('');
+      onUpdate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
-  const enabled = !!user?.totp_enabled
+  const enabled = !!user?.totp_enabled;
 
   return (
     <Card>
@@ -262,42 +296,83 @@ function TotpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['user']
             {t('settings.enableTotp')}
           </Button>
         ) : (
-          <Button size="sm" variant="destructive" onClick={() => setShowDisableDialog(true)} loading={loading}>
+          <Button
+            size="sm"
+            variant="destructive"
+            onClick={() => setShowDisableDialog(true)}
+            loading={loading}
+          >
             {t('settings.disableTotp')}
           </Button>
         )}
       </CardContent>
 
-      <Dialog open={showSetup} onOpenChange={(o) => { if (!o) { setShowSetup(false); setSetupData(null); setCode(''); setBackupCodes([]) } }}>
+      <Dialog
+        open={showSetup}
+        onOpenChange={(o) => {
+          if (!o) {
+            setShowSetup(false);
+            setSetupData(null);
+            setCode('');
+            setBackupCodes([]);
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('settings.setUpAuthApp')}</DialogTitle>
           </DialogHeader>
           {backupCodes.length > 0 ? (
             <div className="space-y-3">
-              <p className="text-sm text-muted-foreground">{t('settings.totpEnabled')}</p>
+              <p className="text-sm text-muted-foreground">
+                {t('settings.totpEnabled')}
+              </p>
               <div className="bg-muted rounded-md p-3 font-mono text-sm grid grid-cols-2 gap-1">
-                {backupCodes.map((c) => <div key={c}>{c}</div>)}
+                {backupCodes.map((c) => (
+                  <div key={c}>{c}</div>
+                ))}
               </div>
-              <Button className="w-full" onClick={() => { setShowSetup(false); setBackupCodes([]) }}>
+              <Button
+                className="w-full"
+                onClick={() => {
+                  setShowSetup(false);
+                  setBackupCodes([]);
+                }}
+              >
                 {t('settings.done')}
               </Button>
             </div>
           ) : setupData ? (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{t('settings.scanQrCode')}</p>
+              <p className="text-sm text-muted-foreground">
+                {t('settings.scanQrCode')}
+              </p>
               <div className="flex justify-center bg-white rounded-md p-3">
-                {qrDataUrl
-                  ? <img src={qrDataUrl} alt="TOTP QR code" width={200} height={200} />
-                  : <p className="text-xs font-mono break-all text-black">{setupData.uri}</p>
-                }
+                {qrDataUrl ? (
+                  <img
+                    src={qrDataUrl}
+                    alt="TOTP QR code"
+                    width={200}
+                    height={200}
+                  />
+                ) : (
+                  <p className="text-xs font-mono break-all text-black">
+                    {setupData.uri}
+                  </p>
+                )}
               </div>
               <p className="text-xs text-muted-foreground">
-                {t('settings.manualSecret')} <span className="font-mono">{setupData.secret}</span>
+                {t('settings.manualSecret')}{' '}
+                <span className="font-mono">{setupData.secret}</span>
               </p>
               <form onSubmit={confirmSetup} className="space-y-3">
                 <OtpInput value={code} onChange={setCode} autoFocus />
-                <Button type="submit" className="w-full" loading={loading} disabled={code.length < 6}>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  loading={loading}
+                  disabled={code.length < 6}
+                >
                   {t('settings.confirm')}
                 </Button>
               </form>
@@ -306,11 +381,21 @@ function TotpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['user']
         </DialogContent>
       </Dialog>
 
-      <Dialog open={showDisableDialog} onOpenChange={(o) => { if (!o) { setShowDisableDialog(false); setDisablePassword('') } }}>
+      <Dialog
+        open={showDisableDialog}
+        onOpenChange={(o) => {
+          if (!o) {
+            setShowDisableDialog(false);
+            setDisablePassword('');
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('settings.disableTotp')}</DialogTitle>
-            <DialogDescription>{t('settings.confirmCurrentPassword')}</DialogDescription>
+            <DialogDescription>
+              {t('settings.confirmCurrentPassword')}
+            </DialogDescription>
           </DialogHeader>
           <Input
             type="password"
@@ -321,64 +406,79 @@ function TotpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['user']
             autoComplete="current-password"
           />
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setShowDisableDialog(false); setDisablePassword('') }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowDisableDialog(false);
+                setDisablePassword('');
+              }}
+            >
               {t('common.cancel')}
             </Button>
-            <Button variant="destructive" onClick={disable} loading={loading} disabled={!disablePassword}>
+            <Button
+              variant="destructive"
+              onClick={disable}
+              loading={loading}
+              disabled={!disablePassword}
+            >
               {t('settings.disable')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
-  )
+  );
 }
 
 function PasskeyCard({ onUpdate }: { onUpdate: () => Promise<void> }) {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
   const { data } = useQuery({
     queryKey: ['passkeys'],
     queryFn: authApi.passkeyList,
-  })
-  const [loading, setLoading] = useState(false)
-  const [newName, setNewName] = useState('')
-  const [deleteId, setDeleteId] = useState<string | null>(null)
-  const [deletePassword, setDeletePassword] = useState('')
+  });
+  const [loading, setLoading] = useState(false);
+  const [newName, setNewName] = useState('');
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [deletePassword, setDeletePassword] = useState('');
 
   const register = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      const { options, challengeId } = await authApi.passkeyRegisterOptions()
-      const response = await startRegistration({ optionsJSON: options })
-      await authApi.passkeyRegisterVerify(response, challengeId, newName || undefined)
-      toast.success('Passkey registered!')
-      setNewName('')
-      queryClient.invalidateQueries({ queryKey: ['passkeys'] })
-      onUpdate()
+      const { options, challengeId } = await authApi.passkeyRegisterOptions();
+      const response = await startRegistration({ optionsJSON: options });
+      await authApi.passkeyRegisterVerify(
+        response,
+        challengeId,
+        newName || undefined,
+      );
+      toast.success('Passkey registered!');
+      setNewName('');
+      queryClient.invalidateQueries({ queryKey: ['passkeys'] });
+      onUpdate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Registration failed')
+      toast.error(err instanceof Error ? err.message : 'Registration failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const deletePasskey = async () => {
-    if (!deleteId || !deletePassword) return
-    setLoading(true)
+    if (!deleteId || !deletePassword) return;
+    setLoading(true);
     try {
-      await authApi.passkeyDelete(deleteId, deletePassword)
-      toast.success('Passkey removed')
-      setDeleteId(null)
-      setDeletePassword('')
-      queryClient.invalidateQueries({ queryKey: ['passkeys'] })
-      onUpdate()
+      await authApi.passkeyDelete(deleteId, deletePassword);
+      toast.success('Passkey removed');
+      setDeleteId(null);
+      setDeletePassword('');
+      queryClient.invalidateQueries({ queryKey: ['passkeys'] });
+      onUpdate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Card>
@@ -391,14 +491,24 @@ function PasskeyCard({ onUpdate }: { onUpdate: () => Promise<void> }) {
       </CardHeader>
       <CardContent className="space-y-3">
         {data?.passkeys.map((pk) => (
-          <div key={pk.id} className="flex items-center justify-between border rounded-md px-3 py-2 text-sm">
+          <div
+            key={pk.id}
+            className="flex items-center justify-between border rounded-md px-3 py-2 text-sm"
+          >
             <div>
-              <p className="font-medium">{pk.name ?? t('settings.unnamedKey')}</p>
+              <p className="font-medium">
+                {pk.name ?? t('settings.unnamedKey')}
+              </p>
               <p className="text-muted-foreground text-xs">
                 {t('settings.added', { date: formatDate(pk.created_at) })}
               </p>
             </div>
-            <Button variant="ghost" size="icon" onClick={() => setDeleteId(pk.id)} className="text-destructive hover:text-destructive">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setDeleteId(pk.id)}
+              className="text-destructive hover:text-destructive"
+            >
               <Trash2 className="h-4 w-4" />
             </Button>
           </div>
@@ -417,11 +527,21 @@ function PasskeyCard({ onUpdate }: { onUpdate: () => Promise<void> }) {
         </div>
       </CardContent>
 
-      <Dialog open={!!deleteId} onOpenChange={(o) => { if (!o) { setDeleteId(null); setDeletePassword('') } }}>
+      <Dialog
+        open={!!deleteId}
+        onOpenChange={(o) => {
+          if (!o) {
+            setDeleteId(null);
+            setDeletePassword('');
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('settings.removePasskey')}</DialogTitle>
-            <DialogDescription>{t('settings.removePasskeyDesc')}</DialogDescription>
+            <DialogDescription>
+              {t('settings.removePasskeyDesc')}
+            </DialogDescription>
           </DialogHeader>
           <Input
             type="password"
@@ -432,83 +552,100 @@ function PasskeyCard({ onUpdate }: { onUpdate: () => Promise<void> }) {
             autoComplete="current-password"
           />
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setDeleteId(null); setDeletePassword('') }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setDeleteId(null);
+                setDeletePassword('');
+              }}
+            >
               {t('common.cancel')}
             </Button>
-            <Button variant="destructive" onClick={deletePasskey} loading={loading} disabled={!deletePassword}>
+            <Button
+              variant="destructive"
+              onClick={deletePasskey}
+              loading={loading}
+              disabled={!deletePassword}
+            >
               {t('settings.remove')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
-  )
+  );
 }
 
 // ─── Email OTP ────────────────────────────────────────────────────────────────
 
-function EmailOtpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['user']; onUpdate: () => Promise<void> }) {
-  const { t } = useTranslation()
-  const [loading, setLoading] = useState(false)
-  const [showEnableDialog, setShowEnableDialog] = useState(false)
-  const [codeSent, setCodeSent] = useState(false)
-  const [verifyCode, setVerifyCode] = useState('')
-  const { countdown, start: startCountdown } = useCountdown()
-  const [disablePassword, setDisablePassword] = useState('')
-  const [showDisableDialog, setShowDisableDialog] = useState(false)
-  const enabled = !!user?.email_2fa_enabled
+function EmailOtpCard({
+  user,
+  onUpdate,
+}: {
+  user: ReturnType<typeof useAuth>['user'];
+  onUpdate: () => Promise<void>;
+}) {
+  const { t } = useTranslation();
+  const [loading, setLoading] = useState(false);
+  const [showEnableDialog, setShowEnableDialog] = useState(false);
+  const [codeSent, setCodeSent] = useState(false);
+  const [verifyCode, setVerifyCode] = useState('');
+  const { countdown, start: startCountdown } = useCountdown();
+  const [disablePassword, setDisablePassword] = useState('');
+  const [showDisableDialog, setShowDisableDialog] = useState(false);
+  const enabled = !!user?.email_2fa_enabled;
 
   const sendVerifyCode = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      await authApi.emailOtpSendVerify()
-      setCodeSent(true)
-      startCountdown(600)
+      await authApi.emailOtpSendVerify();
+      setCodeSent(true);
+      startCountdown(600);
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to send code')
+      toast.error(err instanceof Error ? err.message : 'Failed to send code');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const enable = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      await authApi.emailOtpEnable(verifyCode)
-      toast.success('Email OTP enabled')
-      setShowEnableDialog(false)
-      setCodeSent(false)
-      setVerifyCode('')
-      onUpdate()
+      await authApi.emailOtpEnable(verifyCode);
+      toast.success('Email OTP enabled');
+      setShowEnableDialog(false);
+      setCodeSent(false);
+      setVerifyCode('');
+      onUpdate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const closeEnableDialog = () => {
-    setShowEnableDialog(false)
-    setCodeSent(false)
-    setVerifyCode('')
-    startCountdown(0)
-  }
+    setShowEnableDialog(false);
+    setCodeSent(false);
+    setVerifyCode('');
+    startCountdown(0);
+  };
 
   const disable = async () => {
-    setLoading(true)
+    setLoading(true);
     try {
-      await authApi.emailOtpDisable(disablePassword)
-      toast.success('Email OTP disabled')
-      setShowDisableDialog(false)
-      setDisablePassword('')
-      onUpdate()
+      await authApi.emailOtpDisable(disablePassword);
+      toast.success('Email OTP disabled');
+      setShowDisableDialog(false);
+      setDisablePassword('');
+      onUpdate();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed')
+      toast.error(err instanceof Error ? err.message : 'Failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Card>
@@ -516,7 +653,9 @@ function EmailOtpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['us
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Mail className="h-4 w-4" />
-            <CardTitle className="text-base">{t('settings.emailOtp')}</CardTitle>
+            <CardTitle className="text-base">
+              {t('settings.emailOtp')}
+            </CardTitle>
           </div>
           <Badge variant={enabled ? 'success' : 'secondary'}>
             {enabled ? t('settings.enabled') : t('settings.disabled')}
@@ -528,26 +667,45 @@ function EmailOtpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['us
         <Button
           size="sm"
           variant={enabled ? 'destructive' : 'default'}
-          onClick={enabled ? () => setShowDisableDialog(true) : () => setShowEnableDialog(true)}
+          onClick={
+            enabled
+              ? () => setShowDisableDialog(true)
+              : () => setShowEnableDialog(true)
+          }
           loading={loading}
         >
-          {enabled ? t('settings.disableEmailOtp') : t('settings.enableEmailOtp')}
+          {enabled
+            ? t('settings.disableEmailOtp')
+            : t('settings.enableEmailOtp')}
         </Button>
       </CardContent>
 
       {/* Enable: send verify code → enter code */}
-      <Dialog open={showEnableDialog} onOpenChange={(o) => { if (!o) closeEnableDialog() }}>
+      <Dialog
+        open={showEnableDialog}
+        onOpenChange={(o) => {
+          if (!o) closeEnableDialog();
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('settings.verifyEmailTitle')}</DialogTitle>
-            <DialogDescription>{t('settings.verifyEmailDesc')}</DialogDescription>
+            <DialogDescription>
+              {t('settings.verifyEmailDesc')}
+            </DialogDescription>
           </DialogHeader>
           {!codeSent ? (
             <div className="space-y-4">
-              <p className="text-sm text-muted-foreground">{t('settings.emailOtpVerifyNote')}</p>
+              <p className="text-sm text-muted-foreground">
+                {t('settings.emailOtpVerifyNote')}
+              </p>
               <DialogFooter>
-                <Button variant="ghost" onClick={closeEnableDialog}>{t('common.cancel')}</Button>
-                <Button onClick={sendVerifyCode} loading={loading}>{t('auth.sendCode')}</Button>
+                <Button variant="ghost" onClick={closeEnableDialog}>
+                  {t('common.cancel')}
+                </Button>
+                <Button onClick={sendVerifyCode} loading={loading}>
+                  {t('auth.sendCode')}
+                </Button>
               </DialogFooter>
             </div>
           ) : (
@@ -559,11 +717,27 @@ function EmailOtpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['us
                 placeholder={t('auth.sixDigitFromEmail')}
               />
               <p className="text-xs text-muted-foreground">
-                <ResendCodeButton countdown={countdown} onResend={sendVerifyCode} loading={loading} />
+                <ResendCodeButton
+                  countdown={countdown}
+                  onResend={sendVerifyCode}
+                  loading={loading}
+                />
               </p>
               <DialogFooter>
-                <Button type="button" variant="ghost" onClick={closeEnableDialog}>{t('common.cancel')}</Button>
-                <Button type="submit" loading={loading} disabled={verifyCode.length < 6}>{t('settings.confirm')}</Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={closeEnableDialog}
+                >
+                  {t('common.cancel')}
+                </Button>
+                <Button
+                  type="submit"
+                  loading={loading}
+                  disabled={verifyCode.length < 6}
+                >
+                  {t('settings.confirm')}
+                </Button>
               </DialogFooter>
             </form>
           )}
@@ -571,11 +745,21 @@ function EmailOtpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['us
       </Dialog>
 
       {/* Disable: confirm password */}
-      <Dialog open={showDisableDialog} onOpenChange={(o) => { if (!o) { setShowDisableDialog(false); setDisablePassword('') } }}>
+      <Dialog
+        open={showDisableDialog}
+        onOpenChange={(o) => {
+          if (!o) {
+            setShowDisableDialog(false);
+            setDisablePassword('');
+          }
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>{t('settings.disableEmailOtp')}</DialogTitle>
-            <DialogDescription>{t('settings.confirmCurrentPassword')}</DialogDescription>
+            <DialogDescription>
+              {t('settings.confirmCurrentPassword')}
+            </DialogDescription>
           </DialogHeader>
           <Input
             type="password"
@@ -586,15 +770,26 @@ function EmailOtpCard({ user, onUpdate }: { user: ReturnType<typeof useAuth>['us
             autoComplete="current-password"
           />
           <DialogFooter>
-            <Button variant="ghost" onClick={() => { setShowDisableDialog(false); setDisablePassword('') }}>
+            <Button
+              variant="ghost"
+              onClick={() => {
+                setShowDisableDialog(false);
+                setDisablePassword('');
+              }}
+            >
               {t('common.cancel')}
             </Button>
-            <Button variant="destructive" onClick={disable} loading={loading} disabled={!disablePassword}>
+            <Button
+              variant="destructive"
+              onClick={disable}
+              loading={loading}
+              disabled={!disablePassword}
+            >
               {t('settings.disable')}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </Card>
-  )
+  );
 }

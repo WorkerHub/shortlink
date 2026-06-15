@@ -1,27 +1,31 @@
 // Short code generation with rejection sampling to avoid modulo bias
 // 62^4 = 14,776,336 possible 4-char codes
 
-const ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789'
-const ALPHABET_LEN = ALPHABET.length // 62
+const ALPHABET =
+  'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+const ALPHABET_LEN = ALPHABET.length; // 62
 // Largest multiple of 62 that fits in a byte: floor(256/62)*62 = 4*62 = 248
-const REJECTION_THRESHOLD = Math.floor(256 / ALPHABET_LEN) * ALPHABET_LEN
+const REJECTION_THRESHOLD = Math.floor(256 / ALPHABET_LEN) * ALPHABET_LEN;
 
 export function generateSlug(length = 4): string {
-  const result: string[] = []
+  const result: string[] = [];
   while (result.length < length) {
-    const bytes = crypto.getRandomValues(new Uint8Array((length - result.length) * 2))
+    const bytes = crypto.getRandomValues(
+      new Uint8Array((length - result.length) * 2),
+    );
     for (const byte of bytes) {
-      if (result.length >= length) break
+      if (result.length >= length) break;
       if (byte < REJECTION_THRESHOLD) {
-        result.push(ALPHABET[byte % ALPHABET_LEN]!)
+        const ch = ALPHABET[byte % ALPHABET_LEN];
+        if (ch) result.push(ch);
       }
     }
   }
-  return result.join('')
+  return result.join('');
 }
 
 export function isValidSlug(slug: string): boolean {
-  return /^[a-zA-Z0-9_-]{1,50}$/.test(slug)
+  return /^[a-zA-Z0-9_-]{1,50}$/.test(slug);
 }
 
 // Reserved slugs that would conflict with SPA routes — also used in index.ts to
@@ -39,8 +43,8 @@ export const RESERVED_SLUGS = new Set([
   '404',
   '500',
   'setup',
-])
+]);
 
 export function isReservedSlug(slug: string): boolean {
-  return RESERVED_SLUGS.has(slug.toLowerCase())
+  return RESERVED_SLUGS.has(slug.toLowerCase());
 }

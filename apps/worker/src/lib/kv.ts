@@ -1,5 +1,5 @@
-import type { KVNamespace } from '@cloudflare/workers-types'
-import type { CachedLink } from '../types.js'
+import type { KVNamespace } from '@cloudflare/workers-types';
+import type { CachedLink } from '../types.js';
 
 const KV_PREFIX = {
   link: (slug: string) => `link:${slug}`,
@@ -17,13 +17,16 @@ const KV_PREFIX = {
   jtiDeny: (jti: string) => `jti_deny:${jti}`,
   // R4-L4: TOTP confirm rate limiting per user
   totpConfirmAttempts: (userId: string) => `totp_confirm:${userId}`,
-}
+};
 
 // ─── Link cache ───────────────────────────────────────────────────────────────
 
-export async function getCachedLink(kv: KVNamespace, slug: string): Promise<CachedLink | null> {
-  const val = await kv.get(KV_PREFIX.link(slug), 'json')
-  return val as CachedLink | null
+export async function getCachedLink(
+  kv: KVNamespace,
+  slug: string,
+): Promise<CachedLink | null> {
+  const val = await kv.get(KV_PREFIX.link(slug), 'json');
+  return val as CachedLink | null;
 }
 
 export async function setCachedLink(
@@ -31,20 +34,25 @@ export async function setCachedLink(
   slug: string,
   data: CachedLink,
 ): Promise<void> {
-  const now = Math.floor(Date.now() / 1000)
-  let ttl = 6 * 3600 // 6 hours for permanent links
+  const now = Math.floor(Date.now() / 1000);
+  let ttl = 6 * 3600; // 6 hours for permanent links
 
   if (data.expiresAt !== null) {
-    const remaining = data.expiresAt - now
-    if (remaining <= 0) return // already expired, don't cache
-    ttl = Math.min(remaining, 6 * 3600)
+    const remaining = data.expiresAt - now;
+    if (remaining <= 0) return; // already expired, don't cache
+    ttl = Math.min(remaining, 6 * 3600);
   }
 
-  await kv.put(KV_PREFIX.link(slug), JSON.stringify(data), { expirationTtl: ttl })
+  await kv.put(KV_PREFIX.link(slug), JSON.stringify(data), {
+    expirationTtl: ttl,
+  });
 }
 
-export async function deleteCachedLink(kv: KVNamespace, slug: string): Promise<void> {
-  await kv.delete(KV_PREFIX.link(slug))
+export async function deleteCachedLink(
+  kv: KVNamespace,
+  slug: string,
+): Promise<void> {
+  await kv.delete(KV_PREFIX.link(slug));
 }
 
 // ─── Passkey challenges ───────────────────────────────────────────────────────
@@ -54,7 +62,9 @@ export async function setPasskeyChallenge(
   id: string,
   data: Record<string, unknown>,
 ): Promise<void> {
-  await kv.put(KV_PREFIX.passkeyChallenge(id), JSON.stringify(data), { expirationTtl: 300 })
+  await kv.put(KV_PREFIX.passkeyChallenge(id), JSON.stringify(data), {
+    expirationTtl: 300,
+  });
 }
 
 // S-2: NOTE — KV get+delete is not atomic (TOCTOU). Two concurrent calls could
@@ -66,48 +76,71 @@ export async function getAndDeletePasskeyChallenge(
   kv: KVNamespace,
   id: string,
 ): Promise<Record<string, unknown> | null> {
-  const val = await kv.get(KV_PREFIX.passkeyChallenge(id), 'json')
-  if (val) await kv.delete(KV_PREFIX.passkeyChallenge(id))
-  return val as Record<string, unknown> | null
+  const val = await kv.get(KV_PREFIX.passkeyChallenge(id), 'json');
+  if (val) await kv.delete(KV_PREFIX.passkeyChallenge(id));
+  return val as Record<string, unknown> | null;
 }
 
 // ─── OTP rate limiting (max 3 sends per hour, fixed window) ──────────────────
 
-export async function checkOtpRateLimit(kv: KVNamespace, email: string): Promise<boolean> {
-  const key = KV_PREFIX.otpRate(email)
-  const current = await kv.get(key)
-  const now = Math.floor(Date.now() / 1000)
+export async function checkOtpRateLimit(
+  kv: KVNamespace,
+  email: string,
+): Promise<boolean> {
+  const key = KV_PREFIX.otpRate(email);
+  const current = await kv.get(key);
+  const now = Math.floor(Date.now() / 1000);
 
   if (!current) {
-    await kv.put(key, JSON.stringify({ count: 1, windowEnd: now + 600 }), { expirationTtl: 600 })
-    return true
+    await kv.put(key, JSON.stringify({ count: 1, windowEnd: now + 600 }), {
+      expirationTtl: 600,
+    });
+    return true;
   }
 
-  let entry: { count: number; windowEnd: number }
-  try { entry = JSON.parse(current) } catch {
-    await kv.put(key, JSON.stringify({ count: 1, windowEnd: now + 600 }), { expirationTtl: 600 })
-    return true
+  let entry: { count: number; windowEnd: number };
+  try {
+    entry = JSON.parse(current);
+  } catch {
+    await kv.put(key, JSON.stringify({ count: 1, windowEnd: now + 600 }), {
+      expirationTtl: 600,
+    });
+    return true;
   }
 
-  if (entry.count >= 3) return false
-  const remaining = Math.max(entry.windowEnd - now, 1)
-  await kv.put(key, JSON.stringify({ count: entry.count + 1, windowEnd: entry.windowEnd }), { expirationTtl: remaining })
-  return true
+  if (entry.count >= 3) return false;
+  const remaining = Math.max(entry.windowEnd - now, 1);
+  await kv.put(
+    key,
+    JSON.stringify({ count: entry.count + 1, windowEnd: entry.windowEnd }),
+    { expirationTtl: remaining },
+  );
+  return true;
 }
 
 // ─── Pending 2FA tokens ───────────────────────────────────────────────────────
 
-export async function setPending2fa(kv: KVNamespace, jti: string, userId: string): Promise<void> {
-  await kv.put(KV_PREFIX.pending2fa(jti), userId, { expirationTtl: 600 })
+export async function setPending2fa(
+  kv: KVNamespace,
+  jti: string,
+  userId: string,
+): Promise<void> {
+  await kv.put(KV_PREFIX.pending2fa(jti), userId, { expirationTtl: 600 });
 }
 
 // C3: Read without deleting — used to check replay before processing
-export async function getPending2fa(kv: KVNamespace, jti: string): Promise<string | null> {
-  return kv.get(KV_PREFIX.pending2fa(jti))
+export async function getPending2fa(
+  kv: KVNamespace,
+  jti: string,
+): Promise<string | null> {
+  return kv.get(KV_PREFIX.pending2fa(jti));
 }
 
-export async function deletePending2fa(kv: KVNamespace, jti: string): Promise<void> {
-  await kv.delete(KV_PREFIX.pending2fa(jti))
+export async function deletePending2fa(
+  kv: KVNamespace,
+  jti: string,
+): Promise<void> {
+  await kv.delete(KV_PREFIX.pending2fa(jti));
 }
 
 // ─── Login rate limiting (C1: max 10 attempts per 15 min per email, fixed window) ─
@@ -115,62 +148,90 @@ export async function deletePending2fa(kv: KVNamespace, jti: string): Promise<vo
 // the limit before writes settle. A Cloudflare WAF rate-limit rule is the primary
 // enforcement layer; this provides a defence-in-depth best-effort guard.
 
-export async function checkLoginRateLimit(kv: KVNamespace, email: string): Promise<boolean> {
-  const key = KV_PREFIX.loginAttempts(email)
-  const current = await kv.get(key)
-  const now = Math.floor(Date.now() / 1000)
+export async function checkLoginRateLimit(
+  kv: KVNamespace,
+  email: string,
+): Promise<boolean> {
+  const key = KV_PREFIX.loginAttempts(email);
+  const current = await kv.get(key);
+  const now = Math.floor(Date.now() / 1000);
 
   if (!current) {
-    await kv.put(key, JSON.stringify({ count: 1, windowEnd: now + 900 }), { expirationTtl: 900 })
-    return true
+    await kv.put(key, JSON.stringify({ count: 1, windowEnd: now + 900 }), {
+      expirationTtl: 900,
+    });
+    return true;
   }
 
-  let entry: { count: number; windowEnd: number }
-  try { entry = JSON.parse(current) } catch {
-    await kv.put(key, JSON.stringify({ count: 1, windowEnd: now + 900 }), { expirationTtl: 900 })
-    return true
+  let entry: { count: number; windowEnd: number };
+  try {
+    entry = JSON.parse(current);
+  } catch {
+    await kv.put(key, JSON.stringify({ count: 1, windowEnd: now + 900 }), {
+      expirationTtl: 900,
+    });
+    return true;
   }
 
-  if (entry.count >= 10) return false
-  const remaining = Math.max(entry.windowEnd - now, 1)
-  await kv.put(key, JSON.stringify({ count: entry.count + 1, windowEnd: entry.windowEnd }), { expirationTtl: remaining })
-  return true
+  if (entry.count >= 10) return false;
+  const remaining = Math.max(entry.windowEnd - now, 1);
+  await kv.put(
+    key,
+    JSON.stringify({ count: entry.count + 1, windowEnd: entry.windowEnd }),
+    { expirationTtl: remaining },
+  );
+  return true;
 }
 
-export async function resetLoginAttempts(kv: KVNamespace, email: string): Promise<void> {
-  await kv.delete(KV_PREFIX.loginAttempts(email))
+export async function resetLoginAttempts(
+  kv: KVNamespace,
+  email: string,
+): Promise<void> {
+  await kv.delete(KV_PREFIX.loginAttempts(email));
 }
 
 // ─── 2FA attempt tracking (C2: max 5 per pending token) ──────────────────────
 
-export async function increment2faAttempts(kv: KVNamespace, jti: string): Promise<number> {
-  const key = KV_PREFIX.twoFaAttempts(jti)
-  const current = await kv.get(key)
-  const count = (current ? parseInt(current, 10) : 0) + 1
-  await kv.put(key, String(count), { expirationTtl: 600 }) // matches pending token TTL
-  return count
+export async function increment2faAttempts(
+  kv: KVNamespace,
+  jti: string,
+): Promise<number> {
+  const key = KV_PREFIX.twoFaAttempts(jti);
+  const current = await kv.get(key);
+  const count = (current ? parseInt(current, 10) : 0) + 1;
+  await kv.put(key, String(count), { expirationTtl: 600 }); // matches pending token TTL
+  return count;
 }
 
 // R4-L3: Separate counter for passkey/verify-options (cap 10, independent from verify budget)
-export async function incrementPasskeyOptsAttempts(kv: KVNamespace, jti: string): Promise<number> {
-  const key = KV_PREFIX.passkeyOptsAttempts(jti)
-  const current = await kv.get(key)
-  const count = (current ? parseInt(current, 10) : 0) + 1
-  await kv.put(key, String(count), { expirationTtl: 600 })
-  return count
+export async function incrementPasskeyOptsAttempts(
+  kv: KVNamespace,
+  jti: string,
+): Promise<number> {
+  const key = KV_PREFIX.passkeyOptsAttempts(jti);
+  const current = await kv.get(key);
+  const count = (current ? parseInt(current, 10) : 0) + 1;
+  await kv.put(key, String(count), { expirationTtl: 600 });
+  return count;
 }
 
 // R4-L4: Rate limit TOTP confirm attempts per user (max 10, TTL 120s)
-export async function incrementTotpConfirmAttempts(kv: KVNamespace, userId: string): Promise<number> {
-  const key = KV_PREFIX.totpConfirmAttempts(userId)
-  const current = await kv.get(key)
-  const count = (current ? parseInt(current, 10) : 0) + 1
-  await kv.put(key, String(count), { expirationTtl: 120 })
-  return count
+export async function incrementTotpConfirmAttempts(
+  kv: KVNamespace,
+  userId: string,
+): Promise<number> {
+  const key = KV_PREFIX.totpConfirmAttempts(userId);
+  const current = await kv.get(key);
+  const count = (current ? parseInt(current, 10) : 0) + 1;
+  await kv.put(key, String(count), { expirationTtl: 120 });
+  return count;
 }
 
-export async function resetTotpConfirmAttempts(kv: KVNamespace, userId: string): Promise<void> {
-  await kv.delete(KV_PREFIX.totpConfirmAttempts(userId))
+export async function resetTotpConfirmAttempts(
+  kv: KVNamespace,
+  userId: string,
+): Promise<void> {
+  await kv.delete(KV_PREFIX.totpConfirmAttempts(userId));
 }
 
 // ─── JTI denylist (C4: token revocation) ─────────────────────────────────────
@@ -180,25 +241,38 @@ export async function denylistJti(
   jti: string,
   ttlSeconds: number,
 ): Promise<void> {
-  if (ttlSeconds <= 0) return
-  await kv.put(KV_PREFIX.jtiDeny(jti), '1', { expirationTtl: ttlSeconds })
+  if (ttlSeconds <= 0) return;
+  await kv.put(KV_PREFIX.jtiDeny(jti), '1', { expirationTtl: ttlSeconds });
 }
 
-export async function isJtiDenylisted(kv: KVNamespace, jti: string): Promise<boolean> {
-  const val = await kv.get(KV_PREFIX.jtiDeny(jti))
-  return val !== null
+export async function isJtiDenylisted(
+  kv: KVNamespace,
+  jti: string,
+): Promise<boolean> {
+  const val = await kv.get(KV_PREFIX.jtiDeny(jti));
+  return val !== null;
 }
 
 // ─── Settings cache ───────────────────────────────────────────────────────────
 
-export async function getCachedSetting(kv: KVNamespace, key: string): Promise<string | null> {
-  return kv.get(KV_PREFIX.settingCache(key))
+export async function getCachedSetting(
+  kv: KVNamespace,
+  key: string,
+): Promise<string | null> {
+  return kv.get(KV_PREFIX.settingCache(key));
 }
 
-export async function setCachedSetting(kv: KVNamespace, key: string, value: string): Promise<void> {
-  await kv.put(KV_PREFIX.settingCache(key), value, { expirationTtl: 60 })
+export async function setCachedSetting(
+  kv: KVNamespace,
+  key: string,
+  value: string,
+): Promise<void> {
+  await kv.put(KV_PREFIX.settingCache(key), value, { expirationTtl: 60 });
 }
 
-export async function deleteCachedSetting(kv: KVNamespace, key: string): Promise<void> {
-  await kv.delete(KV_PREFIX.settingCache(key))
+export async function deleteCachedSetting(
+  kv: KVNamespace,
+  key: string,
+): Promise<void> {
+  await kv.delete(KV_PREFIX.settingCache(key));
 }
