@@ -1,4 +1,4 @@
-import { Input } from '@/components/ui/input'
+import { Input } from '@/components/ui/input';
 
 export function OtpInput({
   value,
@@ -7,11 +7,11 @@ export function OtpInput({
   id,
   placeholder = '000000',
 }: {
-  value: string
-  onChange: (value: string) => void
-  autoFocus?: boolean
-  id?: string
-  placeholder?: string
+  value: string;
+  onChange: (value: string) => void;
+  autoFocus?: boolean;
+  id?: string;
+  placeholder?: string;
 }) {
   return (
     <Input
@@ -26,5 +26,5 @@ export function OtpInput({
       autoComplete="one-time-code"
       autoFocus={autoFocus}
     />
-  )
+  );
 }

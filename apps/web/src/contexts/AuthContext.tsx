@@ -1,112 +1,146 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react'
-import { authApi, setAccessToken, type User, type LoginResult } from '../api/client.ts'
+import type React from 'react';
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+} from 'react';
+import {
+  authApi,
+  type LoginResult,
+  setAccessToken,
+  type User,
+} from '../api/client.ts';
 
 interface AuthContextType {
-  user: User | null
-  isLoading: boolean
-  pendingToken: string | null
-  pendingMethods: string[]
-  login: (email: string, password: string) => Promise<LoginResult>
-  logout: () => Promise<void>
-  broadcastLogin: (accessToken: string) => void
-  setPendingState: (token: string, methods: string[]) => void
-  clearPendingState: () => void
-  refreshUser: () => Promise<void>
+  user: User | null;
+  isLoading: boolean;
+  pendingToken: string | null;
+  pendingMethods: string[];
+  login: (email: string, password: string) => Promise<LoginResult>;
+  logout: () => Promise<void>;
+  broadcastLogin: (accessToken: string) => void;
+  setPendingState: (token: string, methods: string[]) => void;
+  clearPendingState: () => void;
+  refreshUser: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null)
+const AuthContext = createContext<AuthContextType | null>(null);
 
-type ChannelMsg =
-  | { type: 'token'; accessToken: string }
-  | { type: 'logout' }
+type ChannelMsg = { type: 'token'; accessToken: string } | { type: 'logout' };
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<User | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [pendingToken, setPendingToken] = useState<string | null>(null)
-  const [pendingMethods, setPendingMethods] = useState<string[]>([])
+  const [user, setUser] = useState<User | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [pendingToken, setPendingToken] = useState<string | null>(null);
+  const [pendingMethods, setPendingMethods] = useState<string[]>([]);
   // H-1: BroadcastChannel for cross-tab token/logout coordination
-  const channelRef = useRef<BroadcastChannel | null>(null)
+  const channelRef = useRef<BroadcastChannel | null>(null);
 
   const refreshUser = useCallback(async () => {
     try {
-      const data = await authApi.me()
-      setUser(data.user)
+      const data = await authApi.me();
+      setUser(data.user);
     } catch {
-      setUser(null)
+      setUser(null);
     }
-  }, [])
+  }, []);
 
   // On mount, try to restore session via HttpOnly refresh cookie (H4)
   useEffect(() => {
     // Open channel before init so we don't miss a sibling tab's token broadcast
-    const channel = typeof BroadcastChannel !== 'undefined'
-      ? new BroadcastChannel('auth')
-      : null
-    channelRef.current = channel
+    const channel =
+      typeof BroadcastChannel !== 'undefined'
+        ? new BroadcastChannel('auth')
+        : null;
+    channelRef.current = channel;
 
     channel?.addEventListener('message', (e: MessageEvent<ChannelMsg>) => {
       if (e.data?.type === 'token') {
         // Another tab refreshed — adopt the new token and fetch the user
-        setAccessToken(e.data.accessToken)
-        authApi.me().then((d) => setUser(d.user)).catch(() => {})
+        setAccessToken(e.data.accessToken);
+        authApi
+          .me()
+          .then((d) => setUser(d.user))
+          .catch(() => {});
       } else if (e.data?.type === 'logout') {
         // Another tab logged out — mirror the logout in this tab
-        setAccessToken(null)
-        setUser(null)
+        setAccessToken(null);
+        setUser(null);
       }
-    })
+    });
 
     const init = async () => {
       try {
-        const data = await authApi.refresh()
-        setAccessToken(data.accessToken)
+        const data = await authApi.refresh();
+        setAccessToken(data.accessToken);
         // Broadcast so sibling tabs avoid their own refresh round-trip
-        channel?.postMessage({ type: 'token', accessToken: data.accessToken } satisfies ChannelMsg)
-        await refreshUser()
+        channel?.postMessage({
+          type: 'token',
+          accessToken: data.accessToken,
+        } satisfies ChannelMsg);
+        await refreshUser();
       } catch {
         // No valid session — user needs to log in
       } finally {
-        setIsLoading(false)
+        setIsLoading(false);
       }
-    }
-    init()
+    };
+    init();
 
-    return () => { channel?.close(); channelRef.current = null }
-  }, [refreshUser])
+    return () => {
+      channel?.close();
+      channelRef.current = null;
+    };
+  }, [refreshUser]);
 
-  const login = useCallback(async (email: string, password: string): Promise<LoginResult> => {
-    const result = await authApi.login(email, password)
-    if (result.accessToken && result.user) {
-      setAccessToken(result.accessToken)
-      // H4: refresh token is set as HttpOnly cookie by the server — no localStorage
-      setUser(result.user)
-      channelRef.current?.postMessage({ type: 'token', accessToken: result.accessToken } satisfies ChannelMsg)
-    }
-    return result
-  }, [])
+  const login = useCallback(
+    async (email: string, password: string): Promise<LoginResult> => {
+      const result = await authApi.login(email, password);
+      if (result.accessToken && result.user) {
+        setAccessToken(result.accessToken);
+        // H4: refresh token is set as HttpOnly cookie by the server — no localStorage
+        setUser(result.user);
+        channelRef.current?.postMessage({
+          type: 'token',
+          accessToken: result.accessToken,
+        } satisfies ChannelMsg);
+      }
+      return result;
+    },
+    [],
+  );
 
   const logout = useCallback(async () => {
-    try { await authApi.logout() } catch { /* ignore */ }
-    setAccessToken(null)
+    try {
+      await authApi.logout();
+    } catch {
+      /* ignore */
+    }
+    setAccessToken(null);
     // H4: server clears the HttpOnly cookie on logout
-    setUser(null)
-    channelRef.current?.postMessage({ type: 'logout' } satisfies ChannelMsg)
-  }, [])
+    setUser(null);
+    channelRef.current?.postMessage({ type: 'logout' } satisfies ChannelMsg);
+  }, []);
 
   const broadcastLogin = useCallback((accessToken: string) => {
-    channelRef.current?.postMessage({ type: 'token', accessToken } satisfies ChannelMsg)
-  }, [])
+    channelRef.current?.postMessage({
+      type: 'token',
+      accessToken,
+    } satisfies ChannelMsg);
+  }, []);
 
   const setPendingState = useCallback((token: string, methods: string[]) => {
-    setPendingToken(token)
-    setPendingMethods(methods)
-  }, [])
+    setPendingToken(token);
+    setPendingMethods(methods);
+  }, []);
 
   const clearPendingState = useCallback(() => {
-    setPendingToken(null)
-    setPendingMethods([])
-  }, [])
+    setPendingToken(null);
+    setPendingMethods([]);
+  }, []);
 
   return (
     <AuthContext.Provider
@@ -125,11 +159,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     >
       {children}
     </AuthContext.Provider>
-  )
+  );
 }
 
 export function useAuth(): AuthContextType {
-  const ctx = useContext(AuthContext)
-  if (!ctx) throw new Error('useAuth must be used within AuthProvider')
-  return ctx
+  const ctx = useContext(AuthContext);
+  if (!ctx) throw new Error('useAuth must be used within AuthProvider');
+  return ctx;
 }

@@ -1,24 +1,26 @@
 // Lightweight UA parser — no external dependencies, ~0.2ms per parse
 
 interface ParsedUA {
-  deviceType: 'mobile' | 'tablet' | 'desktop' | 'bot'
-  browser: string
-  os: string
+  deviceType: 'mobile' | 'tablet' | 'desktop' | 'bot';
+  browser: string;
+  os: string;
 }
 
 const BOT_REGEX =
-  /bot|crawler|spider|scraper|crawling|facebookexternalhit|linkedinbot|twitterbot|slackbot|whatsapp/i
+  /bot|crawler|spider|scraper|crawling|facebookexternalhit|linkedinbot|twitterbot|slackbot|whatsapp/i;
 
 export function parseUA(ua: string | null | undefined): ParsedUA {
-  if (!ua) return { deviceType: 'desktop', browser: 'Unknown', os: 'Unknown' }
+  if (!ua) return { deviceType: 'desktop', browser: 'Unknown', os: 'Unknown' };
 
   if (BOT_REGEX.test(ua)) {
-    return { deviceType: 'bot', browser: 'Bot', os: 'Bot' }
+    return { deviceType: 'bot', browser: 'Bot', os: 'Bot' };
   }
 
-  const isTablet = /iPad|Tablet|tablet/i.test(ua)
-  const isMobile = !isTablet && /Mobile|Android|iPhone|iPod|BlackBerry|Windows Phone/i.test(ua)
-  const deviceType = isTablet ? 'tablet' : isMobile ? 'mobile' : 'desktop'
+  const isTablet = /iPad|Tablet|tablet/i.test(ua);
+  const isMobile =
+    !isTablet &&
+    /Mobile|Android|iPhone|iPod|BlackBerry|Windows Phone/i.test(ua);
+  const deviceType = isTablet ? 'tablet' : isMobile ? 'mobile' : 'desktop';
 
   const browser = /Edg\//i.test(ua)
     ? 'Edge'
@@ -32,7 +34,7 @@ export function parseUA(ua: string | null | undefined): ParsedUA {
             ? 'Chrome'
             : /Safari\//i.test(ua)
               ? 'Safari'
-              : 'Other'
+              : 'Other';
 
   const os = /Windows NT/i.test(ua)
     ? 'Windows'
@@ -44,7 +46,7 @@ export function parseUA(ua: string | null | undefined): ParsedUA {
           ? 'macOS'
           : /Linux/i.test(ua)
             ? 'Linux'
-            : 'Other'
+            : 'Other';
 
-  return { deviceType, browser, os }
+  return { deviceType, browser, os };
 }

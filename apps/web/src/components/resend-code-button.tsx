@@ -1,18 +1,18 @@
-import { useTranslation } from '@/i18n'
+import { useTranslation } from '@/i18n';
 
 export function ResendCodeButton({
   countdown,
   onResend,
   loading,
 }: {
-  countdown: number
-  onResend: () => void
-  loading?: boolean
+  countdown: number;
+  onResend: () => void;
+  loading?: boolean;
 }) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
 
   if (countdown > 0) {
-    return <>{t('auth.resendCodeIn', { seconds: String(countdown) })}</>
+    return <>{t('auth.resendCodeIn', { seconds: String(countdown) })}</>;
   }
 
   return (
@@ -24,5 +24,5 @@ export function ResendCodeButton({
     >
       {t('auth.resendCode')}
     </button>
-  )
+  );
 }

@@ -1,4 +1,4 @@
-import type { Translations } from './en'
+import type { Translations } from './en';
 
 export const zhCN: Translations = {
   common: {
@@ -60,7 +60,8 @@ export const zhCN: Translations = {
     forgotPasswordTitle: '忘记密码',
     forgotPasswordDesc: '请输入您的注册邮箱',
     sendResetCode: '发送重置验证码',
-    resetCodeSentTo: '如果您输入的账户 {{email}} 存在，重置验证码将会发送至该邮箱，请在下方输入验证码。',
+    resetCodeSentTo:
+      '如果您输入的账户 {{email}} 存在，重置验证码将会发送至该邮箱，请在下方输入验证码。',
     codeValidFor: '验证码10分钟内有效。',
     resendCodeIn: '{{seconds}}秒后重新发送',
     verifyCode: '验证',
@@ -206,4 +207,4 @@ export const zhCN: Translations = {
     emailVerificationRequired: '必须',
     emailVerificationNotRequired: '不需要',
   },
-}
+};

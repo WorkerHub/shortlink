@@ -1,39 +1,54 @@
-import { useState } from 'react'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import { linksApi, type Link, type CreateLinkPayload } from '@/api/client'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog'
-import { toast } from 'sonner'
-import { Plus, Search } from 'lucide-react'
-import { expiryLabel, formatDate } from '@/lib/utils'
-import { LinkSlugCell, LinkDestinationCell, LinkExpiryCell, LinkStatusCell, LinkActionCell } from '@/components/link-table-cells'
-import { useTranslation } from '@/i18n'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Plus, Search } from 'lucide-react';
+import { useState } from 'react';
+import { toast } from 'sonner';
+import { type CreateLinkPayload, type Link, linksApi } from '@/api/client';
+import {
+  LinkActionCell,
+  LinkDestinationCell,
+  LinkExpiryCell,
+  LinkSlugCell,
+  LinkStatusCell,
+} from '@/components/link-table-cells';
+import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { useTranslation } from '@/i18n';
+import { formatDate } from '@/lib/utils';
 
 export default function LinksPage() {
-  const { t } = useTranslation()
-  const queryClient = useQueryClient()
-  const [search, setSearch] = useState('')
-  const [page, setPage] = useState(1)
-  const [showCreate, setShowCreate] = useState(false)
-  const [editLink, setEditLink] = useState<Link | null>(null)
-  const [deleteId, setDeleteId] = useState<string | null>(null)
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [search, setSearch] = useState('');
+  const [page, setPage] = useState(1);
+  const [showCreate, setShowCreate] = useState(false);
+  const [editLink, setEditLink] = useState<Link | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['links', page, search],
-    queryFn: () => linksApi.list({ page, limit: 20, search: search || undefined }),
-  })
+    queryFn: () =>
+      linksApi.list({ page, limit: 20, search: search || undefined }),
+  });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => linksApi.delete(id),
     onSuccess: () => {
-      toast.success('Link deleted')
-      queryClient.invalidateQueries({ queryKey: ['links'] })
-      setDeleteId(null)
+      toast.success('Link deleted');
+      queryClient.invalidateQueries({ queryKey: ['links'] });
+      setDeleteId(null);
     },
-    onError: (err) => toast.error(err instanceof Error ? err.message : 'Delete failed'),
-  })
+    onError: (err) =>
+      toast.error(err instanceof Error ? err.message : 'Delete failed'),
+  });
 
   return (
     <div className="p-6">
@@ -50,40 +65,73 @@ export default function LinksPage() {
         <Input
           placeholder={t('links.searchPlaceholder')}
           value={search}
-          onChange={(e) => { setSearch(e.target.value); setPage(1) }}
+          onChange={(e) => {
+            setSearch(e.target.value);
+            setPage(1);
+          }}
           className="pl-9"
         />
       </div>
 
       {isLoading ? (
-        <div className="text-center py-12 text-muted-foreground">{t('common.loading')}</div>
+        <div className="text-center py-12 text-muted-foreground">
+          {t('common.loading')}
+        </div>
       ) : !data?.links.length ? (
-        <div className="text-center py-12 text-muted-foreground">{t('links.noLinks')}</div>
+        <div className="text-center py-12 text-muted-foreground">
+          {t('links.noLinks')}
+        </div>
       ) : (
         <div className="rounded-md border overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b bg-muted/50">
                 <th className="px-4 py-3 text-left font-medium w-12">#</th>
-                <th className="px-4 py-3 text-left font-medium">{t('links.shortLink')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('links.destination')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('links.clicks')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('links.expiry')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('common.status')}</th>
-                <th className="px-4 py-3 text-left font-medium">{t('common.created')}</th>
-                <th className="px-4 py-3 text-right font-medium">{t('common.actions')}</th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('links.shortLink')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('links.destination')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('links.clicks')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('links.expiry')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('common.status')}
+                </th>
+                <th className="px-4 py-3 text-left font-medium">
+                  {t('common.created')}
+                </th>
+                <th className="px-4 py-3 text-right font-medium">
+                  {t('common.actions')}
+                </th>
               </tr>
             </thead>
             <tbody>
               {data.links.map((link) => (
-                <tr key={link.id} className="border-b last:border-0 hover:bg-muted/20">
-                  <td className="px-4 py-3 text-muted-foreground text-xs">{link.user_seq}</td>
+                <tr
+                  key={link.id}
+                  className="border-b last:border-0 hover:bg-muted/20"
+                >
+                  <td className="px-4 py-3 text-muted-foreground text-xs">
+                    {link.user_seq}
+                  </td>
                   <LinkSlugCell slug={link.slug} />
                   <LinkDestinationCell url={link.destination_url} />
-                  <td className="px-4 py-3 text-muted-foreground">{link.click_count ?? 0}</td>
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {link.click_count ?? 0}
+                  </td>
                   <LinkExpiryCell expiresAt={link.expires_at} />
-                  <LinkStatusCell isActive={link.is_active} expiresAt={link.expires_at} />
-                  <td className="px-4 py-3 text-muted-foreground">{formatDate(link.created_at)}</td>
+                  <LinkStatusCell
+                    isActive={link.is_active}
+                    expiresAt={link.expires_at}
+                  />
+                  <td className="px-4 py-3 text-muted-foreground">
+                    {formatDate(link.created_at)}
+                  </td>
                   <LinkActionCell
                     link={link}
                     onEdit={(l) => setEditLink(l)}
@@ -102,10 +150,20 @@ export default function LinksPage() {
             {t('links.totalLinks', { count: data.pagination.total })}
           </span>
           <div className="flex gap-2">
-            <Button variant="outline" size="sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page <= 1}
+              onClick={() => setPage((p) => p - 1)}
+            >
               {t('common.previous')}
             </Button>
-            <Button variant="outline" size="sm" disabled={page >= data.pagination.pages} onClick={() => setPage((p) => p + 1)}>
+            <Button
+              variant="outline"
+              size="sm"
+              disabled={page >= data.pagination.pages}
+              onClick={() => setPage((p) => p + 1)}
+            >
               {t('common.next')}
             </Button>
           </div>
@@ -116,8 +174,8 @@ export default function LinksPage() {
         open={showCreate}
         onOpenChange={setShowCreate}
         onCreated={() => {
-          queryClient.invalidateQueries({ queryKey: ['links'] })
-          setShowCreate(false)
+          queryClient.invalidateQueries({ queryKey: ['links'] });
+          setShowCreate(false);
         }}
       />
 
@@ -127,8 +185,8 @@ export default function LinksPage() {
           open={!!editLink}
           onOpenChange={(o) => !o && setEditLink(null)}
           onUpdated={() => {
-            queryClient.invalidateQueries({ queryKey: ['links'] })
-            setEditLink(null)
+            queryClient.invalidateQueries({ queryKey: ['links'] });
+            setEditLink(null);
           }}
         />
       )}
@@ -154,7 +212,7 @@ export default function LinksPage() {
         </DialogContent>
       </Dialog>
     </div>
-  )
+  );
 }
 
 // ─── Create Link Dialog ────────────────────────────────────────────────────────
@@ -164,34 +222,36 @@ function CreateLinkDialog({
   onOpenChange,
   onCreated,
 }: {
-  open: boolean
-  onOpenChange: (o: boolean) => void
-  onCreated: () => void
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onCreated: () => void;
 }) {
-  const { t } = useTranslation()
-  const [form, setForm] = useState<CreateLinkPayload>({ destinationUrl: '' })
-  const [expiryOption, setExpiryOption] = useState<'never' | '1' | '7' | '30' | 'custom'>('never')
-  const [loading, setLoading] = useState(false)
+  const { t } = useTranslation();
+  const [form, setForm] = useState<CreateLinkPayload>({ destinationUrl: '' });
+  const [expiryOption, setExpiryOption] = useState<
+    'never' | '1' | '7' | '30' | 'custom'
+  >('never');
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
-      const payload: CreateLinkPayload = { ...form }
+      const payload: CreateLinkPayload = { ...form };
       if (expiryOption !== 'never' && expiryOption !== 'custom') {
-        payload.expiryDays = parseInt(expiryOption, 10)
+        payload.expiryDays = parseInt(expiryOption, 10);
       }
-      await linksApi.create(payload)
-      toast.success('Link created!')
-      setForm({ destinationUrl: '' })
-      setExpiryOption('never')
-      onCreated()
+      await linksApi.create(payload);
+      toast.success('Link created!');
+      setForm({ destinationUrl: '' });
+      setExpiryOption('never');
+      onCreated();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Failed to create link')
+      toast.error(err instanceof Error ? err.message : 'Failed to create link');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -207,7 +267,9 @@ function CreateLinkDialog({
               type="url"
               placeholder="https://example.com/very-long-url"
               value={form.destinationUrl}
-              onChange={(e) => setForm((f) => ({ ...f, destinationUrl: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, destinationUrl: e.target.value }))
+              }
               required
             />
           </div>
@@ -218,7 +280,12 @@ function CreateLinkDialog({
               type="text"
               placeholder={t('links.slugPlaceholder')}
               value={form.customSlug ?? ''}
-              onChange={(e) => setForm((f) => ({ ...f, customSlug: e.target.value || undefined }))}
+              onChange={(e) =>
+                setForm((f) => ({
+                  ...f,
+                  customSlug: e.target.value || undefined,
+                }))
+              }
             />
           </div>
           <div className="space-y-1">
@@ -228,7 +295,9 @@ function CreateLinkDialog({
               type="text"
               placeholder={t('links.titlePlaceholder')}
               value={form.title ?? ''}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value || undefined }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, title: e.target.value || undefined }))
+              }
             />
           </div>
           <div className="space-y-2">
@@ -245,7 +314,11 @@ function CreateLinkDialog({
                       : 'border-input hover:bg-accent'
                   }`}
                 >
-                  {opt === 'never' ? t('links.never') : opt === 'custom' ? t('links.custom') : `${opt}d`}
+                  {opt === 'never'
+                    ? t('links.never')
+                    : opt === 'custom'
+                      ? t('links.custom')
+                      : `${opt}d`}
                 </button>
               ))}
             </div>
@@ -264,7 +337,11 @@ function CreateLinkDialog({
             )}
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               {t('common.cancel')}
             </Button>
             <Button type="submit" loading={loading}>
@@ -274,7 +351,7 @@ function CreateLinkDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }
 
 // ─── Edit Link Dialog ──────────────────────────────────────────────────────────
@@ -285,24 +362,24 @@ export function EditLinkDialog({
   onOpenChange,
   onUpdated,
 }: {
-  link: Link
-  open: boolean
-  onOpenChange: (o: boolean) => void
-  onUpdated: () => void
+  link: Link;
+  open: boolean;
+  onOpenChange: (o: boolean) => void;
+  onUpdated: () => void;
 }) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
   const [form, setForm] = useState({
     destinationUrl: link.destination_url,
     customSlug: link.slug,
     title: link.title ?? '',
     isActive: !!link.is_active,
-  })
-  const [expiresAt, setExpiresAt] = useState<number | null>(link.expires_at)
-  const [loading, setLoading] = useState(false)
+  });
+  const [expiresAt, setExpiresAt] = useState<number | null>(link.expires_at);
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+    e.preventDefault();
+    setLoading(true);
     try {
       await linksApi.update(link.id, {
         destinationUrl: form.destinationUrl,
@@ -310,19 +387,19 @@ export function EditLinkDialog({
         title: form.title || undefined,
         isActive: form.isActive,
         expiresAt,
-      })
-      toast.success('Link updated')
-      onUpdated()
+      });
+      toast.success('Link updated');
+      onUpdated();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Update failed')
+      toast.error(err instanceof Error ? err.message : 'Update failed');
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   const expiresAtInputValue = expiresAt
     ? new Date(expiresAt * 1000).toISOString().slice(0, 16)
-    : ''
+    : '';
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -336,7 +413,9 @@ export function EditLinkDialog({
             <Input
               type="url"
               value={form.destinationUrl}
-              onChange={(e) => setForm((f) => ({ ...f, destinationUrl: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, destinationUrl: e.target.value }))
+              }
               required
             />
           </div>
@@ -344,7 +423,9 @@ export function EditLinkDialog({
             <Label>{t('links.shortLink')}</Label>
             <Input
               value={form.customSlug}
-              onChange={(e) => setForm((f) => ({ ...f, customSlug: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, customSlug: e.target.value }))
+              }
               required
             />
           </div>
@@ -352,7 +433,9 @@ export function EditLinkDialog({
             <Label>{t('links.titleField')}</Label>
             <Input
               value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, title: e.target.value }))
+              }
             />
           </div>
           <div className="space-y-1">
@@ -362,7 +445,9 @@ export function EditLinkDialog({
               value={expiresAtInputValue}
               onChange={(e) =>
                 setExpiresAt(
-                  e.target.value ? Math.floor(new Date(e.target.value).getTime() / 1000) : null,
+                  e.target.value
+                    ? Math.floor(new Date(e.target.value).getTime() / 1000)
+                    : null,
                 )
               }
             />
@@ -372,13 +457,19 @@ export function EditLinkDialog({
               type="checkbox"
               id="active"
               checked={form.isActive}
-              onChange={(e) => setForm((f) => ({ ...f, isActive: e.target.checked }))}
+              onChange={(e) =>
+                setForm((f) => ({ ...f, isActive: e.target.checked }))
+              }
               className="h-4 w-4"
             />
             <Label htmlFor="active">{t('links.activeLabel')}</Label>
           </div>
           <DialogFooter>
-            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
               {t('common.cancel')}
             </Button>
             <Button type="submit" loading={loading}>
@@ -388,5 +479,5 @@ export function EditLinkDialog({
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

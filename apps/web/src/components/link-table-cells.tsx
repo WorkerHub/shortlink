@@ -1,11 +1,16 @@
-import { useNavigate } from 'react-router-dom'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Copy, ExternalLink, BarChart2, Pencil, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
-import { buildShortUrl, copyToClipboard, expiryLabel, isExpired } from '@/lib/utils'
-import type { Link } from '@/api/client'
-import { useTranslation } from '@/i18n'
+import { BarChart2, Copy, ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { toast } from 'sonner';
+import type { Link } from '@/api/client';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { useTranslation } from '@/i18n';
+import {
+  buildShortUrl,
+  copyToClipboard,
+  expiryLabel,
+  isExpired,
+} from '@/lib/utils';
 
 export function LinkSlugCell({ slug }: { slug: string }) {
   return (
@@ -13,14 +18,19 @@ export function LinkSlugCell({ slug }: { slug: string }) {
       <div className="flex items-center gap-1">
         <span className="text-primary">{slug}</span>
         <button
-          onClick={() => copyToClipboard(buildShortUrl(slug)).then(() => toast.success('Copied!'))}
+          type="button"
+          onClick={() =>
+            copyToClipboard(buildShortUrl(slug)).then(() =>
+              toast.success('Copied!'),
+            )
+          }
           className="text-muted-foreground hover:text-foreground"
         >
           <Copy className="h-3 w-3" />
         </button>
       </div>
     </td>
-  )
+  );
 }
 
 export function LinkDestinationCell({ url }: { url: string }) {
@@ -38,21 +48,25 @@ export function LinkDestinationCell({ url }: { url: string }) {
         </a>
       </div>
     </td>
-  )
+  );
 }
 
 export function LinkExpiryCell({ expiresAt }: { expiresAt: number | null }) {
-  return <td className="px-4 py-3 text-muted-foreground">{expiryLabel(expiresAt)}</td>
+  return (
+    <td className="px-4 py-3 text-muted-foreground">
+      {expiryLabel(expiresAt)}
+    </td>
+  );
 }
 
 export function LinkStatusCell({
   isActive,
   expiresAt,
 }: {
-  isActive: number
-  expiresAt: number | null
+  isActive: number;
+  expiresAt: number | null;
 }) {
-  const { t } = useTranslation()
+  const { t } = useTranslation();
   return (
     <td className="px-4 py-3">
       {!isActive ? (
@@ -63,7 +77,7 @@ export function LinkStatusCell({
         <Badge variant="success">{t('common.active')}</Badge>
       )}
     </td>
-  )
+  );
 }
 
 export function LinkActionCell({
@@ -71,11 +85,11 @@ export function LinkActionCell({
   onEdit,
   onDelete,
 }: {
-  link: Link
-  onEdit: (link: Link) => void
-  onDelete: (id: string) => void
+  link: Link;
+  onEdit: (link: Link) => void;
+  onDelete: (id: string) => void;
 }) {
-  const navigate = useNavigate()
+  const navigate = useNavigate();
   return (
     <td className="px-4 py-3">
       <div className="flex items-center justify-end gap-1">
@@ -99,5 +113,5 @@ export function LinkActionCell({
         </Button>
       </div>
     </td>
-  )
+  );
 }
